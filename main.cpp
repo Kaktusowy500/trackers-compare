@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <random>
+#include "ITracker.hpp"
 #include "CSRTTracker.hpp"
 #include "VITTracker.hpp"
 #include "DaSiamTracker.hpp"
@@ -58,12 +59,16 @@ int main(int argc, char **argv)
         {
             auto color = colors[i];
             cv::Rect bbox;
-            bool ok = trackers[i]->update(frame, bbox);
-            cv::putText(frame, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
-            cv::rectangle(frame, bbox, color, 2, 1);
-            std::string state = ok ? "OK" : "LOST";
-            cv::Scalar state_color = ok ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
-            cv::putText(frame, trackers[i]->getName() + " : " + state, cv::Point(10, (frame.rows - 20) - 30 * i),
+            trackers[i]->update(frame, bbox);
+            bool trackingValid = (trackers[i]->getState() == TrackerState::Tracking);
+            if (trackingValid)
+            {
+                cv::putText(frame, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
+                cv::rectangle(frame, bbox, color, 2, 1);
+            }
+            std::string state_str = stateToString(trackers[i]->getState());
+            cv::Scalar state_color = trackingValid ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
+            cv::putText(frame, trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore()), cv::Point(10, (frame.rows - 20) - 30 * i),
                         cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
         }
 

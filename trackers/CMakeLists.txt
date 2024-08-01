@@ -1,4 +1,5 @@
 add_library(trackers
+ITracker.cpp
 CSRTTracker.cpp
 VITTracker.cpp
 DaSiamTracker.cpp)
