@@ -2,8 +2,10 @@
 
 CSRTTracker::CSRTTracker()
 {
+    name = "CSRT";
     tracker = cv::TrackerCSRT::create();
 }
+
 CSRTTracker::~CSRTTracker() {}
 
 void CSRTTracker::init(const cv::Mat &frame, cv::Rect roi)

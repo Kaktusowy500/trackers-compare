@@ -3,7 +3,10 @@
 #include <opencv2/core/ocl.hpp>
 #include <iostream>
 #include <memory>
+#include <random>
 #include "CSRTTracker.hpp"
+#include "VITTracker.hpp"
+#include "DaSiamTracker.hpp"
 
 int main(int argc, char **argv)
 {
@@ -29,18 +32,40 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    cv::Rect bbox = cv::selectROI("Tracking", frame, false);
-    std::unique_ptr<ITracker> tracker = std::make_unique<CSRTTracker>();
+    std::vector<std::unique_ptr<ITracker>> trackers;
+    trackers.push_back(std::make_unique<CSRTTracker>());
+    trackers.push_back(std::make_unique<VITTracker>());
+    trackers.push_back(std::make_unique<DaSiamTracker>());
 
-    tracker->init(frame, bbox);
+    cv::Rect bbox = cv::selectROI("Tracking", frame, false);
+    for (auto &t : trackers)
+    {
+        t->init(frame, bbox);
+    }
+
+    std::mt19937 rng;
+    rng.seed(1234567890);
+    std::uniform_int_distribution<std::mt19937::result_type> dist255(0, 255);
+    std::vector<cv::Scalar> colors;
+    for (auto &t : trackers)
+    {
+        colors.push_back(cv::Scalar(dist255(rng), dist255(rng), dist255(rng)));
+    }
 
     while (video.read(frame))
     {
-        cv::Rect bbox;
-        bool ok = tracker->update(frame, bbox);
-        cv::Scalar color = ok ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
-        cv::putText(frame, "CSRT", cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
-        cv::rectangle(frame, bbox, color, 2, 1);
+        for (int i = 0; i < trackers.size(); i++)
+        {
+            auto color = colors[i];
+            cv::Rect bbox;
+            bool ok = trackers[i]->update(frame, bbox);
+            cv::putText(frame, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
+            cv::rectangle(frame, bbox, color, 2, 1);
+            std::string state = ok ? "OK" : "LOST";
+            cv::Scalar state_color = ok ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
+            cv::putText(frame, trackers[i]->getName() + " : " + state, cv::Point(10, (frame.rows - 20) - 30 * i),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
+        }
 
         cv::imshow("Tracking", frame);
         if (cv::waitKey(1) == 27)
