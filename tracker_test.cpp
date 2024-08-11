@@ -57,15 +57,16 @@ int main(int argc, char **argv)
     {
         for (int i = 0; i < trackers.size(); i++)
         {
-            auto color = colors[i];
             cv::Rect bbox;
             trackers[i]->update(frame, bbox);
             bool trackingValid = (trackers[i]->getState() == TrackerState::Tracking);
-            if (trackingValid)
-            {
-                cv::putText(frame, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
-                cv::rectangle(frame, bbox, color, 2, 1);
-            }
+            // if (trackingValid)
+            // {
+
+            auto color = trackingValid ? colors[i] : cv::Scalar(0, 0, 255);
+            cv::putText(frame, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
+            cv::rectangle(frame, bbox, color, 2, 1);
+            // }
             std::string state_str = stateToString(trackers[i]->getState());
             cv::Scalar state_color = trackingValid ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
             cv::putText(frame, trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore()), cv::Point(10, (frame.rows - 20) - 30 * i),

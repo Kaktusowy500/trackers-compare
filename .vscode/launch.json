@@ -7,7 +7,7 @@
             "request": "launch",
             // Resolved by CMake Tools:
             "program": "${command:cmake.launchTargetPath}",
-            "args": ["data/many_cars2.mp4"],
+            "args": ["data/otb/BlurCar2"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [

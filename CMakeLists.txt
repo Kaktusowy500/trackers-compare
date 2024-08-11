@@ -11,12 +11,12 @@ add_subdirectory(trackers)
 add_subdirectory(utils)
 add_subdirectory(tests)
 
-add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} trackers)
-target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
+add_executable(${PROJECT_NAME} evaluator.cpp)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} utils)
+target_include_directories(${PROJECT_NAME} PRIVATE utils ${OpenCV_INCLUDE_DIRS})
 
-add_executable(evaluator evaluator.cpp)
-target_link_libraries(evaluator utils)
-target_include_directories(evaluator PRIVATE utils)
+add_executable(tracker_test tracker_test.cpp)
+target_link_libraries(tracker_test ${OpenCV_LIBS} trackers)
+target_include_directories(tracker_test PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 
