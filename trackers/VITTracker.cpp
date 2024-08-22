@@ -6,7 +6,7 @@ VITTracker::VITTracker()
     cv::TrackerVit::Params params;
     params.net = "nn_models/vit.onnx";
     tracker = cv::TrackerVit::create(params);
-    scoreThresh = 0.4;
+    scoreThresh = 0.3;
 }
 VITTracker::~VITTracker() {}
 

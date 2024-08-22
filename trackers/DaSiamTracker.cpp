@@ -8,7 +8,7 @@ DaSiamTracker::DaSiamTracker()
     params.kernel_cls1 = "nn_models/dasiamrpn_kernel_cls1.onnx";
     params.kernel_r1 = "nn_models/dasiamrpn_kernel_r1.onnx";
     tracker = cv::TrackerDaSiamRPN::create(params);
-    scoreThresh = 0.9;
+    scoreThresh = 0.85;
 }
 
 DaSiamTracker::~DaSiamTracker() {}
