@@ -2,6 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #include <vector>
+#include <opencv2/opencv.hpp>
 
 enum class DatasetType
 {
@@ -19,3 +20,5 @@ struct DatasetInfo
 
 std::ostream &operator<<(std::ostream &os, const DatasetInfo &datasetInfo);
 DatasetInfo getDatasetInfo(const std::string &path);
+std::vector<cv::Rect> loadRectsFromFile(const std::string& filename);
+

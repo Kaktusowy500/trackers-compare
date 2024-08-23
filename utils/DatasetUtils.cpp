@@ -1,4 +1,5 @@
 #include "DatasetUtils.hpp"
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -44,4 +45,37 @@ DatasetInfo getDatasetInfo(const std::string &path)
         std::cerr << "The provided path is not a directory." << std::endl;
     }
     return dataset_info;
+}
+
+
+std::vector<cv::Rect> loadRectsFromFile(const std::string& filename)
+{
+    // Each row in the ground-truth files represents the bounding box of the target in that frame,
+    // (x, y, box-width, box-height).
+
+    std::vector<cv::Rect> rects;
+    std::ifstream file(filename);
+
+    if (!file.is_open())
+    {
+        std::cerr << "Could not open the file: " << filename << std::endl;
+        return rects;
+    }
+
+    std::string line;
+    while (std::getline(file, line))
+    {
+        // Replace commas with spaces to handle comma-separated values
+        std::replace(line.begin(), line.end(), ',', ' ');
+
+        std::istringstream iss(line);
+        int x, y, width, height;
+        if (iss >> x >> y >> width >> height)
+        {
+            rects.emplace_back(x, y, width, height);
+        }
+    }
+
+    file.close();
+    return rects;
 }

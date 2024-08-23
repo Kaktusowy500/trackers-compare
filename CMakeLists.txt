@@ -12,7 +12,7 @@ add_subdirectory(utils)
 add_subdirectory(tests)
 add_subdirectory(evaluation)
 
-add_executable(${PROJECT_NAME} tracker_compare.cpp)
+add_executable(${PROJECT_NAME} tracker_compare.cpp TrackerComparator.cpp)
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} utils trackers evaluation)
 target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS} utils trackers evaluation)
 
