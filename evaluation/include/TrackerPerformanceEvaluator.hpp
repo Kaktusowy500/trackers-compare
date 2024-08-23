@@ -6,15 +6,16 @@
 
 class TrackerPerformanceEvaluator {
 private:
-    std::vector<double> overlaps;  // Store the overlaps for each frame
-    std::vector<double> errors;    // Store the localization errors for each frame
+    std::vector<double> overlaps;  // percentage of overlap between the ground truth and tracking result
+    std::vector<double> errors;    // localization errors for each frame in pixels
+    std::vector<double> processing_times;    // processing times for each frame in seconds
 
     double calculateOverlap(const cv::Rect &groundTruth, const cv::Rect &trackingResult);
     double calculateCenterError(const cv::Rect &groundTruth, const cv::Rect &trackingResult);
 
 public:
     // Method to add a single frame's results
-    void addFrameResult(const cv::Rect &groundTruth, const cv::Rect &trackingResult);
+    void addFrameResult(const cv::Rect &groundTruth, const cv::Rect &trackingResult, double processing_time);
 
     // Method to calculate and return the average overlap
     double getAverageOverlap() const;
