@@ -13,6 +13,7 @@ enum class DatasetType
 
 struct DatasetInfo
 {
+    std::string name;
     std::string media_path;
     DatasetType dataset_type;
     std::vector<std::string> ground_truth_paths;

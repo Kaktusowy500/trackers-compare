@@ -5,6 +5,7 @@ namespace fs = std::filesystem;
 
 std::ostream &operator<<(std::ostream &os, const DatasetInfo &datasetInfo)
 {
+    os << "Name: " << datasetInfo.name << '\n';
     os << "Media Path: " << datasetInfo.media_path << '\n';
     os << "Dataset Type: " << static_cast<int>(datasetInfo.dataset_type) << '\n';
     os << "Ground Truth Paths: \n";
@@ -22,6 +23,8 @@ DatasetInfo getDatasetInfo(const std::string &path)
     DatasetInfo dataset_info;
     if (fs::is_directory(path))
     {
+        std::filesystem::path dir_path(path);
+        dataset_info.name = dir_path.parent_path().filename().string(); 
         for (const auto &entry : fs::directory_iterator(path))
         {
             if (entry.is_regular_file() && entry.path().extension() == ".mp4")

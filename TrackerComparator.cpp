@@ -1,3 +1,5 @@
+#include <sstream>
+#include <fstream>
 #include "TrackerComparator.hpp"
 #include "CSRTTracker.hpp"
 #include "VITTracker.hpp"
@@ -5,6 +7,20 @@
 #include "DatasetUtils.hpp"
 #include "VideoFileReader.hpp"
 #include "ImageSequenceReader.hpp"
+
+// Compare strategies
+// Reset imidiately after loss, count resets and avg tracking time
+// Reset after some time to allow recovery
+// One init and do not count when aim was lost
+
+// 2 validity info, one from tracker itself, one from evaluator
+
+enum class ReinitStrategy
+{
+    Immediate,
+    Delayed,
+    OneInit
+};
 
 void TrackerComparator::loadDataset(std::string path)
 {
@@ -102,19 +118,24 @@ void TrackerComparator::runEvaluation()
                 trackers[i]->update(frame, bbox);
                 auto end_time = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> processing_time = end_time - start_time;
-                evaluators[i]->addFrameResult(ground_truths[frame_count], bbox, processing_time.count());
+                bool is_valid_by_evaluator = evaluators[i]->addFrameResult(ground_truths[frame_count], bbox, processing_time.count());
 
-                bool trackingValid = (trackers[i]->getState() == TrackerState::Tracking);
-                // if (trackingValid)
+                bool tracking_valid = (trackers[i]->getState() == TrackerState::Tracking);
+                if (!is_valid_by_evaluator)
+                {
+                    trackers[i]->init(frame, ground_truths[frame_count]);
+                    evaluators[i]->trackingReinited();
+                }
+                // if (tracking_valid)
                 // {
 
-                auto color = trackingValid ? colors[i] : cv::Scalar(0, 0, 255);
+                auto color = tracking_valid ? colors[i] : cv::Scalar(0, 0, 255);
                 cv::putText(frame, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
                             2);
                 cv::rectangle(frame, bbox, color, 2, 1);
                 // }
                 std::string state_str = stateToString(trackers[i]->getState());
-                cv::Scalar state_color = trackingValid ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
+                cv::Scalar state_color = tracking_valid ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
                 cv::putText(frame,
                             trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore()),
                             cv::Point(10, (frame.rows - 20) - 30 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
@@ -130,10 +151,22 @@ void TrackerComparator::runEvaluation()
 
 void TrackerComparator::saveResults(std::string path)
 {
+
+    std::string summary_file_path = path + "/" + "summary.csv";
+    std::ofstream summary_file(summary_file_path);
+    if (!summary_file.is_open())
+    {
+        std::cerr << "Could not open the file: " << summary_file_path << std::endl;
+        return;
+    }
+    summary_file << "Tracker Name,Reinit" << std::endl;
+
     for (int i = 0; i < trackers.size(); i++)
     {
         std::string filename = path + "/" + trackers[i]->getName() + "_results.csv";
         evaluators[i]->saveResultsToFile(filename);
+        summary_file << trackers[i]->getName() << "," << evaluators[i]->getReinitCount() << std::endl;
     }
+
     std::cout << "Results saved to: " << path << std::endl;
 }

@@ -22,7 +22,7 @@ double TrackerPerformanceEvaluator::calculateCenterError(const cv::Rect &groundT
 }
 
 // Method to add a single frame's results
-void TrackerPerformanceEvaluator::addFrameResult(const cv::Rect &groundTruth, const cv::Rect &trackingResult,
+bool TrackerPerformanceEvaluator::addFrameResult(const cv::Rect &groundTruth, const cv::Rect &trackingResult,
                                                  double processing_time, bool valid)
 {
   FrameResult result;
@@ -30,8 +30,15 @@ void TrackerPerformanceEvaluator::addFrameResult(const cv::Rect &groundTruth, co
   result.error = calculateCenterError(groundTruth, trackingResult);
   result.processing_time = processing_time;
   result.bbox_area = trackingResult.area();
-  result.valid = valid;
+
+  double diagonal = std::sqrt(std::pow(groundTruth.width, 2) + std::pow(groundTruth.height, 2));
+  double normalizedCentreError = result.error / diagonal;
+  // std::cout << "Overlap: " << result.overlap << "Normalized centre error" << normalizedCentreError << std::endl;
+  bool tracking_valid = (result.overlap > overlapThresh && normalizedCentreError < centerErrorThresh);
+
+  result.valid = tracking_valid;
   results.push_back(result);
+  return tracking_valid;
 }
 
 // Method to calculate and return the average overlap
@@ -107,6 +114,7 @@ void TrackerPerformanceEvaluator::saveResultsToFile(const std::string &filename)
   std::cout << "Average Overlap: " << getAverageOverlap() << "\n";
   std::cout << "Average Center Error: " << getAverageError() << "\n";
   std::cout << "Average Center Error: " << getAverageProcessingTime() << "\n";
+  std::cout << "Reinit number: " << reinit_count << "\n";
 
   file.close();
 }

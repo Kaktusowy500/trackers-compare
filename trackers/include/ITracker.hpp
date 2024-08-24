@@ -7,7 +7,8 @@ enum class TrackerState
     Ready,
     Tracking,
     Recovering,
-    Lost
+    Lost,
+    ToBeReinited
 };
 std::string stateToString(TrackerState state);
 
