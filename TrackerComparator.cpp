@@ -33,7 +33,6 @@ bool TrackerComparator::setupVideoReader()
     return true;
 }
 
-
 bool TrackerComparator::setupTrackersAndEvaluators()
 {
     try
@@ -41,15 +40,15 @@ bool TrackerComparator::setupTrackersAndEvaluators()
         trackers.push_back(std::make_unique<CSRTTracker>());
         trackers.push_back(std::make_unique<VITTracker>());
         trackers.push_back(std::make_unique<DaSiamTracker>());
-        colors = std::vector<cv::Scalar>({ cv::Scalar(255, 50, 150), cv::Scalar(0, 255, 0), cv::Scalar(255, 0, 0) });
+        colors = std::vector<cv::Scalar>({cv::Scalar(255, 50, 150), cv::Scalar(0, 255, 0), cv::Scalar(255, 0, 0)});
 
-        for (const auto& t : trackers)
+        for (const auto &t : trackers)
         {
-            evaluators.push_back(std::make_unique<TrackerPerformanceEvaluator>());
+            evaluators.push_back(std::make_unique<TrackerPerformanceEvaluator>(t->getName()));
         }
         return true;
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         std::cerr << e.what() << std::endl;
         return false;
@@ -69,10 +68,12 @@ bool TrackerComparator::readFirstFrameAndInit()
 {
     if (videoReader->getNextFrame(frame))
     {
-        for (auto& t : trackers)
+        for (auto &t : trackers)
         {
             t->init(frame, ground_truths[frame_count]);
         }
+        cv::rectangle(frame, ground_truths[frame_count], cv::Scalar(0, 0, 255), 2, 1);
+        cv::imshow("First frame", frame);
         frame_count++;
     }
     else
@@ -80,13 +81,14 @@ bool TrackerComparator::readFirstFrameAndInit()
         std::cout << "Error reading first frame." << std::endl;
         return false;
     }
-    cv::rectangle(frame, ground_truths[frame_count], cv::Scalar(0, 0, 255), 2, 1);
-    cv::imshow("First frame", frame);
     return true;
 }
 
+void TrackerComparator::runEvaluation()
+{
+    if (!readFirstFrameAndInit())
+        return;
 
-void TrackerComparator::runEvaluation() {
     while (!videoReader->isDone())
     {
         if (videoReader->getNextFrame(frame))
@@ -108,30 +110,30 @@ void TrackerComparator::runEvaluation() {
 
                 auto color = trackingValid ? colors[i] : cv::Scalar(0, 0, 255);
                 cv::putText(frame, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
-                    2);
+                            2);
                 cv::rectangle(frame, bbox, color, 2, 1);
                 // }
                 std::string state_str = stateToString(trackers[i]->getState());
                 cv::Scalar state_color = trackingValid ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
                 cv::putText(frame,
-                    trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore()),
-                    cv::Point(10, (frame.rows - 20) - 30 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
+                            trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore()),
+                            cv::Point(10, (frame.rows - 20) - 30 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
             }
 
             cv::imshow("Frame", frame);
             if (cv::waitKey(30) >= 0)
-                break;  // Press any key to exit
+                break; // Press any key to exit
             frame_count++;
         }
     }
 }
 
-void TrackerComparator::saveResults(std::string path) {
+void TrackerComparator::saveResults(std::string path)
+{
     for (int i = 0; i < trackers.size(); i++)
     {
         std::string filename = path + "/" + trackers[i]->getName() + "_results.csv";
         evaluators[i]->saveResultsToFile(filename);
     }
     std::cout << "Results saved to: " << path << std::endl;
-
 }

@@ -12,12 +12,12 @@
 
 #include "TrackerComparator.hpp"
 
-std::string createDirectoryWithTimestamp(const std::string& baseDirectory = "runs")
+std::string createDirectoryWithTimestamp(const std::string &baseDirectory = "runs")
 {
   auto now = std::chrono::system_clock::now();
   auto now_time_t = std::chrono::system_clock::to_time_t(now);
 
-  std::tm* now_tm = std::localtime(&now_time_t);
+  std::tm *now_tm = std::localtime(&now_time_t);
   std::stringstream ss;
   ss << std::put_time(now_tm, "%Y-%m-%d_%H-%M-%S");
 
@@ -28,8 +28,7 @@ std::string createDirectoryWithTimestamp(const std::string& baseDirectory = "run
   return directoryName;
 }
 
-
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   if (argc < 2)
   {
@@ -40,11 +39,8 @@ int main(int argc, char** argv)
   std::string createdDir = createDirectoryWithTimestamp();
   trackerComparator->loadDataset(argv[1]);
   trackerComparator->setupComponents();
-  trackerComparator->readFirstFrameAndInit();
   trackerComparator->runEvaluation();
   trackerComparator->saveResults(createdDir);
-
-
 
   return 0;
 }

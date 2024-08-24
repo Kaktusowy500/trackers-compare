@@ -25,6 +25,8 @@ def process_tracker_results_from_directory(directory):
             overlaps = []
             errors = []
             processing_times = []
+            bbox_areas = []
+            valid_indicators = []
 
             with open(filepath, 'r') as file:
                 reader = csv.DictReader(file)
@@ -36,12 +38,16 @@ def process_tracker_results_from_directory(directory):
                     overlaps.append(float(row['Overlap']))
                     errors.append(float(row['Center Error']))
                     processing_times.append(float(row['Processing Time']))
+                    bbox_areas.append(float(row['BBox Area']))
+                    valid_indicators.append(float(row['Valid']))
 
             tracker_data[tracker_name] = {
                 'frames': frame_numbers,
                 'overlaps': overlaps,
                 'errors': errors,
-                'processing_times': processing_times
+                'processing_times': processing_times,
+                'bbox_areas': bbox_areas,
+                'valid_indicators': valid_indicators
             }
 
     # Plot Overlaps
@@ -80,6 +86,19 @@ def process_tracker_results_from_directory(directory):
     plt.grid(True)
     plt.legend()
     processing_time_plot_path = os.path.join(plots_directory, "processing_time_plot.png")
+    plt.savefig(processing_time_plot_path)
+    plt.close()
+
+    # Plot BBox Areas
+    plt.figure(figsize=(10, 6))
+    for tracker_name, data in tracker_data.items():
+        plt.plot(data['frames'], data['bbox_areas'], label=f"{tracker_name} BBox Area")
+    plt.xlabel('Frame Number')
+    plt.ylabel('Bounding Box Area (px)')
+    plt.title('Bounding Box area per Frame for All Trackers')
+    plt.grid(True)
+    plt.legend()
+    processing_time_plot_path = os.path.join(plots_directory, "bbox_area_plot.png")
     plt.savefig(processing_time_plot_path)
     plt.close()
 

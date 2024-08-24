@@ -13,10 +13,10 @@ class TrackerComparator
 public:
     void loadDataset(std::string path);
     bool setupComponents();
-    bool readFirstFrameAndInit();
     void runEvaluation();
     void saveResults(std::string path);
 private:
+    bool readFirstFrameAndInit();
     bool setupVideoReader();
     bool setupTrackersAndEvaluators();
     
