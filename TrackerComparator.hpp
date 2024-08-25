@@ -14,6 +14,7 @@ public:
     void loadDataset(std::string path);
     bool setupComponents();
     void runEvaluation();
+    void runPreview(std::string tracker_name);
     void saveResults(std::string path);
 private:
     bool readFirstFrameAndInit();

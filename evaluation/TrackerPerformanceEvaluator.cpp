@@ -113,7 +113,7 @@ void TrackerPerformanceEvaluator::saveResultsToFile(const std::string &filename)
   std::cout << "\nTracker: " << tracker_name << " statistics: " << std::endl;
   std::cout << "Average Overlap: " << getAverageOverlap() << "\n";
   std::cout << "Average Center Error: " << getAverageError() << "\n";
-  std::cout << "Average Center Error: " << getAverageProcessingTime() << "\n";
+  std::cout << "Average ProcessingTime: " << getAverageProcessingTime() << "\n";
   std::cout << "Reinit number: " << reinit_count << "\n";
 
   file.close();

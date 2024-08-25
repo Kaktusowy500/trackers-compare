@@ -17,7 +17,7 @@ def process_tracker_results_from_directory(directory):
 
     # Iterate over all files in the directory
     for filename in os.listdir(directory):
-        if filename.endswith(".csv"):
+        if filename.endswith("results.csv"):
             filepath = os.path.join(directory, filename)
             tracker_name = os.path.splitext(filename)[0]
 
