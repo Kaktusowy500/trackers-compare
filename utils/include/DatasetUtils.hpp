@@ -19,7 +19,17 @@ struct DatasetInfo
     std::vector<std::string> ground_truth_paths;
 };
 
+struct Annotation
+{
+    cv::Rect2f rect;   
+    int frame;         
+    int occluded = -1; // Occlusion status, default is -1 indicating unknown
+};
+
+
 std::ostream &operator<<(std::ostream &os, const DatasetInfo &datasetInfo);
 DatasetInfo getDatasetInfo(const std::string &path);
-std::vector<cv::Rect> loadRectsFromFile(const std::string& filename);
+std::vector<Annotation> loadOTBAnnotations(const std::string& filename);
+std::vector<Annotation> loadCustomAnnotations(const std::string& filename);
+
 

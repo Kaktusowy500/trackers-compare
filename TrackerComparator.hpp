@@ -20,10 +20,11 @@ private:
     bool readFirstFrameAndInit();
     bool setupVideoReader();
     bool setupTrackersAndEvaluators();
-    
+    void convertGTToNonNormalized(int imgWidth, int imgHeight);
+
     DatasetInfo dataset_info;
-    std::unique_ptr<VideoReader> videoReader;
-    std::vector<cv::Rect> ground_truths;
+    std::unique_ptr<VideoReader> video_reader;
+    std::vector<Annotation> ground_truths;
     std::vector<std::unique_ptr<ITracker>> trackers;
     std::vector<std::unique_ptr<TrackerPerformanceEvaluator>> evaluators;
     std::vector<cv::Scalar> colors;

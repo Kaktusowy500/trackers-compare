@@ -26,7 +26,14 @@ void TrackerComparator::loadDataset(std::string path)
 {
     dataset_info = getDatasetInfo(path);
     std::cout << dataset_info << std::endl;
-    ground_truths = loadRectsFromFile(dataset_info.ground_truth_paths[0]);
+    if (dataset_info.dataset_type == DatasetType::Custom)
+    {
+        ground_truths = loadCustomAnnotations(dataset_info.ground_truth_paths[0]);
+    }
+    else if (dataset_info.dataset_type == DatasetType::OTB)
+    {
+        ground_truths = loadOTBAnnotations(dataset_info.ground_truth_paths[0]);
+    }
     std::cout << "Ground truth vector size: " << ground_truths.size() << std::endl;
 }
 
@@ -35,11 +42,11 @@ bool TrackerComparator::setupVideoReader()
 
     if (dataset_info.dataset_type == DatasetType::OTB)
     {
-        videoReader = std::make_unique<ImageSequenceReader>(dataset_info.media_path);
+        video_reader = std::make_unique<ImageSequenceReader>(dataset_info.media_path);
     }
     else if (dataset_info.dataset_type == DatasetType::Custom)
     {
-        videoReader = std::make_unique<VideoFileReader>(dataset_info.media_path);
+        video_reader = std::make_unique<VideoFileReader>(dataset_info.media_path);
     }
     else
     {
@@ -82,13 +89,17 @@ bool TrackerComparator::setupComponents()
 
 bool TrackerComparator::readFirstFrameAndInit()
 {
-    if (videoReader->getNextFrame(frame))
+    if (video_reader->getNextFrame(frame))
     {
+        if (dataset_info.dataset_type == DatasetType::Custom)
+        {
+            convertGTToNonNormalized(frame.cols, frame.rows);
+        }
         for (auto& t : trackers)
         {
-            t->init(frame, ground_truths[frame_count]);
+            t->init(frame, ground_truths[frame_count].rect);
         }
-        cv::rectangle(frame, ground_truths[frame_count], cv::Scalar(0, 0, 255), 2, 1);
+        cv::rectangle(frame, ground_truths[frame_count].rect, cv::Scalar(0, 0, 255), 2, 1);
         cv::imshow("First frame", frame);
         frame_count++;
     }
@@ -105,11 +116,11 @@ void TrackerComparator::runEvaluation()
     if (!readFirstFrameAndInit())
         return;
 
-    while (!videoReader->isDone())
+    while (!video_reader->isDone())
     {
-        if (videoReader->getNextFrame(frame))
+        if (video_reader->getNextFrame(frame))
         {
-            cv::rectangle(frame, ground_truths[frame_count], cv::Scalar(0, 0, 255), 2, 1);
+            cv::rectangle(frame, ground_truths[frame_count].rect, cv::Scalar(0, 0, 255), 2, 1);
 
             for (int i = 0; i < trackers.size(); i++)
             {
@@ -118,12 +129,12 @@ void TrackerComparator::runEvaluation()
                 trackers[i]->update(frame, bbox);
                 auto end_time = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> processing_time = end_time - start_time;
-                bool is_valid_by_evaluator = evaluators[i]->addFrameResult(ground_truths[frame_count], bbox, processing_time.count());
+                bool is_valid_by_evaluator = evaluators[i]->addFrameResult(ground_truths[frame_count].rect, bbox, processing_time.count());
 
                 bool tracking_valid = (trackers[i]->getState() == TrackerState::Tracking);
                 if (!is_valid_by_evaluator)
                 {
-                    trackers[i]->init(frame, ground_truths[frame_count]);
+                    trackers[i]->init(frame, ground_truths[frame_count].rect);
                     evaluators[i]->trackingReinited();
                 }
                 // if (tracking_valid)
@@ -167,10 +178,10 @@ void TrackerComparator::runPreview(std::string tracker_name)
     }
 
 
-    while (!videoReader->isDone())
+    while (!video_reader->isDone())
     {
 
-        if (videoReader->getNextFrame(frame))
+        if (video_reader->getNextFrame(frame))
         {
             cv::Rect bbox;
             bool tracking_valid = (trackers[tracker_id]->getState() == TrackerState::Tracking);
@@ -230,4 +241,16 @@ void TrackerComparator::saveResults(std::string path)
     }
 
     std::cout << "Results saved to: " << path << std::endl;
+}
+
+void TrackerComparator::convertGTToNonNormalized(int imgWidth, int imgHeight)
+{
+    for (auto& gt : ground_truths)
+    {
+        float x = gt.rect.x * imgWidth;
+        float y = gt.rect.y * imgHeight;
+        float width = gt.rect.width * imgWidth;
+        float height = gt.rect.height * imgHeight;
+        gt.rect = cv::Rect2f(x, y, width, height);
+    }
 }
