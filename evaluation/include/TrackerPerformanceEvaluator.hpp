@@ -1,6 +1,7 @@
 #pragma once
 
 #include <opencv2/opencv.hpp>
+#include <spdlog/spdlog.h>
 #include <vector>
 #include <string>
 
@@ -32,7 +33,7 @@ public:
     void saveResultsToFile(const std::string &filename) const;
     void trackingReinited()
     {
-        std::cout << "Tracking reinit" << std::endl;
+        spdlog::debug("Tracker {} reinited", tracker_name);
         reinit_count++;
     }
     unsigned int getReinitCount()

@@ -1,5 +1,7 @@
 #include <sstream>
 #include <fstream>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h> 
 #include "TrackerComparator.hpp"
 #include "CSRTTracker.hpp"
 #include "VITTracker.hpp"
@@ -25,7 +27,7 @@ enum class ReinitStrategy
 void TrackerComparator::loadDataset(std::string path)
 {
     dataset_info = getDatasetInfo(path);
-    std::cout << dataset_info << std::endl;
+    spdlog::debug("Dataset info: \n{}", fmt::streamed(dataset_info));
     if (dataset_info.dataset_type == DatasetType::Custom)
     {
         ground_truths = loadCustomAnnotations(dataset_info.ground_truth_paths[0]);
@@ -34,7 +36,7 @@ void TrackerComparator::loadDataset(std::string path)
     {
         ground_truths = loadOTBAnnotations(dataset_info.ground_truth_paths[0]);
     }
-    std::cout << "Ground truth vector size: " << ground_truths.size() << std::endl;
+    spdlog::debug("Ground truth vector size: {}", ground_truths.size());
 }
 
 bool TrackerComparator::setupVideoReader()
@@ -50,7 +52,7 @@ bool TrackerComparator::setupVideoReader()
     }
     else
     {
-        std::cout << "Unknown dataset type." << std::endl;
+        spdlog::error("Unknown dataset type");
         return false;
     }
     return true;
@@ -105,7 +107,7 @@ bool TrackerComparator::readFirstFrameAndInit()
     }
     else
     {
-        std::cout << "Error reading first frame." << std::endl;
+        spdlog::error("Error reading first frame");
         return false;
     }
     return true;
@@ -173,7 +175,7 @@ void TrackerComparator::runPreview(std::string tracker_name)
     }
     if (tracker_id < -1)
     {
-        std::cout << "Tracker not found." << std::endl;
+        spdlog::error("Tracker not found");
         return;
     }
 
@@ -240,7 +242,7 @@ void TrackerComparator::saveResults(std::string path)
         summary_file << trackers[i]->getName() << "," << evaluators[i]->getReinitCount() << std::endl;
     }
 
-    std::cout << "Results saved to: " << path << std::endl;
+    spdlog::info("Results saved to: {}", path);
 }
 
 void TrackerComparator::convertGTToNonNormalized(int imgWidth, int imgHeight)

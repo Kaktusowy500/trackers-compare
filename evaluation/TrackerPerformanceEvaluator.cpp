@@ -33,7 +33,6 @@ bool TrackerPerformanceEvaluator::addFrameResult(const cv::Rect &groundTruth, co
 
   double diagonal = std::sqrt(std::pow(groundTruth.width, 2) + std::pow(groundTruth.height, 2));
   double normalizedCentreError = result.error / diagonal;
-  // std::cout << "Overlap: " << result.overlap << "Normalized centre error" << normalizedCentreError << std::endl;
   bool tracking_valid = (result.overlap > overlapThresh && normalizedCentreError < centerErrorThresh);
 
   result.valid = tracking_valid;
@@ -100,7 +99,7 @@ void TrackerPerformanceEvaluator::saveResultsToFile(const std::string &filename)
   std::ofstream file(filename);
   if (!file.is_open())
   {
-    std::cerr << "Could not open the file: " << filename << std::endl;
+    spdlog::info("Could not open the file: {}", filename);
     return;
   }
 
@@ -110,11 +109,16 @@ void TrackerPerformanceEvaluator::saveResultsToFile(const std::string &filename)
     file << i + 1 << "," << results[i].overlap << "," << results[i].error << "," << results[i].processing_time << "," << results[i].bbox_area << "," << results[i].valid << "\n";
   }
 
-  std::cout << "\nTracker: " << tracker_name << " statistics: " << std::endl;
-  std::cout << "Average Overlap: " << getAverageOverlap() << "\n";
-  std::cout << "Average Center Error: " << getAverageError() << "\n";
-  std::cout << "Average ProcessingTime: " << getAverageProcessingTime() << "\n";
-  std::cout << "Reinit number: " << reinit_count << "\n";
+    spdlog::info("Tracker: {} statistics:\n"
+                 "Average Overlap: {}\n"
+                 "Average Center Error: {}\n"
+                 "Average Processing Time: {}\n"
+                 "Reinit number: {}",
+                 tracker_name,
+                 getAverageOverlap(),
+                 getAverageError(),
+                 getAverageProcessingTime(),
+                 reinit_count);
 
   file.close();
 }

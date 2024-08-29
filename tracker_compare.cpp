@@ -6,6 +6,8 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <opencv2/tracking.hpp>
+#include <spdlog/spdlog.h>
+#include "spdlog/cfg/env.h"
 #include "DatasetUtils.hpp"
 #include "VideoFileReader.hpp"
 #include "ImageSequenceReader.hpp"
@@ -30,17 +32,19 @@ std::string createDirectoryWithTimestamp(const std::string& baseDirectory = "run
 
 int main(int argc, char** argv)
 {
+  spdlog::cfg::load_env_levels();
+  spdlog::info("Tracker Compare started");
   bool preview_only = false;
   if (argc < 2)
   {
-    std::cout << "Usage: " << argv[0] << "clip directory [-t] [tracker_for_preview_name]" << std::endl;
+    spdlog::error("Usage: {} clip directory [-t] [tracker_for_preview_name]", argv[0]);
     return -1;
   }
   if (argc > 2 && std::string(argv[2]) == "-t")
   {
     if (argc < 4)
     {
-      std::cout << "Tracker for preview name not provided" << std::endl;
+      spdlog::error("Tracker for preview name not provided");
       return -1;
     }
     preview_only = true;
