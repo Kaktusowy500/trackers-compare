@@ -49,9 +49,9 @@ int main(int argc, char** argv)
     }
     preview_only = true;
   }
+  
   auto trackerComparator = std::make_unique<TrackerComparator>();
-  std::string createdDir = createDirectoryWithTimestamp();
-  trackerComparator->loadDataset(argv[1]);
+  trackerComparator->loadDataset(argv[1], preview_only);
   trackerComparator->setupComponents();
 
   if (preview_only)
@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   }
   else
   {
+    std::string createdDir = createDirectoryWithTimestamp();
     trackerComparator->runEvaluation();
     trackerComparator->saveResults(createdDir);
   }

@@ -24,8 +24,15 @@ enum class ReinitStrategy
     OneInit
 };
 
-void TrackerComparator::loadDataset(std::string path)
+void TrackerComparator::loadDataset(std::string path, bool only_video)
 {
+    if (only_video)
+    {
+        dataset_info.media_path = path;
+        dataset_info.dataset_type = DatasetType::VideoOnly;
+        return;
+    }
+    
     dataset_info = getDatasetInfo(path);
     spdlog::debug("Dataset info: \n{}", fmt::streamed(dataset_info));
     if (dataset_info.dataset_type == DatasetType::Custom)
@@ -46,7 +53,7 @@ bool TrackerComparator::setupVideoReader()
     {
         video_reader = std::make_unique<ImageSequenceReader>(dataset_info.media_path);
     }
-    else if (dataset_info.dataset_type == DatasetType::Custom)
+    else if (dataset_info.dataset_type == DatasetType::Custom || dataset_info.dataset_type == DatasetType::VideoOnly)
     {
         video_reader = std::make_unique<VideoFileReader>(dataset_info.media_path);
     }
@@ -122,6 +129,11 @@ void TrackerComparator::runEvaluation()
     {
         if (video_reader->getNextFrame(frame))
         {
+            if (frame_count >= ground_truths.size())
+            {
+                spdlog::error("Ground truth vector size exceeded");
+                break;
+            }
             cv::rectangle(frame, ground_truths[frame_count].rect, cv::Scalar(0, 0, 255), 2, 1);
 
             for (int i = 0; i < trackers.size(); i++)

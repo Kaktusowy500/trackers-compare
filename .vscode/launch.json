@@ -16,7 +16,7 @@
             // Resolved by CMake Tools:
             "program": "${command:cmake.launchTargetPath}",
             "args": [
-                "data/otb/BlurCar2"
+                "data/custom/car_probo"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

@@ -48,7 +48,7 @@ private:
     std::vector<FrameResult> results;
     std::string tracker_name;
     // params
-    double overlapThresh = 0.4;
-    double centerErrorThresh = 0.2; // normalized diagonal of the bounding box
+    double overlapThresh = 0.3;
+    double centerErrorThresh = 0.25; // normalized diagonal of the bounding box
     unsigned int reinit_count = 0;
 };

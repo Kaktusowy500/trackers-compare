@@ -11,7 +11,7 @@
 class TrackerComparator
 {
 public:
-    void loadDataset(std::string path);
+    void loadDataset(std::string path, bool only_video = false);
     bool setupComponents();
     void runEvaluation();
     void runPreview(std::string tracker_name);

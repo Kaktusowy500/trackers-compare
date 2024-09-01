@@ -8,6 +8,7 @@ enum class DatasetType
 {
     Custom,
     OTB,
+    VideoOnly,
     Unknown
 };
 
