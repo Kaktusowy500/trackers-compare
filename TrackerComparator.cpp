@@ -32,7 +32,7 @@ void TrackerComparator::loadDataset(std::string path, bool only_video)
         dataset_info.dataset_type = DatasetType::VideoOnly;
         return;
     }
-    
+
     dataset_info = getDatasetInfo(path);
     spdlog::debug("Dataset info: \n{}", fmt::streamed(dataset_info));
     if (dataset_info.dataset_type == DatasetType::Custom)
@@ -129,12 +129,13 @@ void TrackerComparator::runEvaluation()
     {
         if (video_reader->getNextFrame(frame))
         {
+            cv::Mat frame_vis = frame.clone();
             if (frame_count >= ground_truths.size())
             {
                 spdlog::error("Ground truth vector size exceeded");
                 break;
             }
-            cv::rectangle(frame, ground_truths[frame_count].rect, cv::Scalar(0, 0, 255), 2, 1);
+            cv::rectangle(frame_vis, ground_truths[frame_count].rect, cv::Scalar(0, 0, 255), 2, 1);
 
             for (int i = 0; i < trackers.size(); i++)
             {
@@ -155,18 +156,18 @@ void TrackerComparator::runEvaluation()
                 // {
 
                 auto color = tracking_valid ? colors[i] : cv::Scalar(0, 0, 255);
-                cv::putText(frame, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
+                cv::putText(frame_vis, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
                     2);
-                cv::rectangle(frame, bbox, color, 2, 1);
+                cv::rectangle(frame_vis, bbox, color, 2, 1);
                 // }
                 std::string state_str = stateToString(trackers[i]->getState());
                 cv::Scalar state_color = tracking_valid ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
-                cv::putText(frame,
+                cv::putText(frame_vis,
                     trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore()),
-                    cv::Point(10, (frame.rows - 20) - 30 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
+                    cv::Point(10, (frame_vis.rows - 20) - 30 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
             }
 
-            cv::imshow("Frame", frame);
+            cv::imshow("Frame", frame_vis);
             if (cv::waitKey(10) >= 0)
                 break; // Press any key to exit
             frame_count++;

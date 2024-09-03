@@ -17,8 +17,4 @@ add_executable(${PROJECT_NAME} tracker_compare.cpp TrackerComparator.cpp)
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} utils trackers evaluation spdlog::spdlog)
 target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS} utils trackers evaluation)
 
-add_executable(tracker_test tracker_test.cpp)
-target_link_libraries(tracker_test ${OpenCV_LIBS} trackers)
-target_include_directories(tracker_test PRIVATE ${OpenCV_INCLUDE_DIRS})
-
 
