@@ -144,13 +144,13 @@ void TrackerComparator::runEvaluation()
                 trackers[i]->update(frame, bbox);
                 auto end_time = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> processing_time = end_time - start_time;
-                bool is_valid_by_evaluator = evaluators[i]->addFrameResult(ground_truths[frame_count].rect, bbox, processing_time.count());
+                ValidationStatus valid_status = evaluators[i]->addFrameResult(ground_truths[frame_count].rect, bbox, processing_time.count());
 
                 bool tracking_valid = (trackers[i]->getState() == TrackerState::Tracking);
-                if (!is_valid_by_evaluator)
+                if (valid_status != ValidationStatus::Valid)
                 {
                     trackers[i]->init(frame, ground_truths[frame_count].rect);
-                    evaluators[i]->trackingReinited();
+                    evaluators[i]->trackingReinited(valid_status);
                 }
                 // if (tracking_valid)
                 // {

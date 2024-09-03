@@ -14,12 +14,21 @@ struct FrameResult
     bool valid;             // whether the tracking result is valid or not
 };
 
+enum class ValidationStatus
+{
+    Valid,
+    NonValidTrackingScore,
+    NonValidOverlap,
+    NonValidCenterError
+};
+std::string ValidationStatusToString(ValidationStatus status);
+
 class TrackerPerformanceEvaluator
 {
 public:
     TrackerPerformanceEvaluator(const std::string &tracker_name);
     // Method to add a single frame's results
-    bool addFrameResult(const cv::Rect &groundTruth, const cv::Rect &trackingResult, double processing_time, bool valid = true);
+    ValidationStatus addFrameResult(const cv::Rect& ground_truth, const cv::Rect& tracking_result, double processing_time, bool valid = true);
 
     // Method to calculate and return the average overlap
     double getAverageOverlap() const;
@@ -31,9 +40,9 @@ public:
 
     // Method to save the results to a file
     void saveResultsToFile(const std::string &filename) const;
-    void trackingReinited()
+    void trackingReinited(const ValidationStatus& reason)
     {
-        spdlog::debug("Tracker {} reinited", tracker_name);
+        spdlog::debug("Tracker {} reinited, reason {}", tracker_name, ValidationStatusToString(reason));
         reinit_count++;
     }
     unsigned int getReinitCount()
@@ -42,13 +51,13 @@ public:
     }
 
 private:
-    double calculateOverlap(const cv::Rect &groundTruth, const cv::Rect &trackingResult);
-    double calculateCenterError(const cv::Rect &groundTruth, const cv::Rect &trackingResult);
+    double calculateOverlap(const cv::Rect &ground_truth, const cv::Rect &tracking_result);
+    double calculateCenterError(const cv::Rect &ground_truth, const cv::Rect &tracking_result);
 
     std::vector<FrameResult> results;
     std::string tracker_name;
     // params
-    double overlapThresh = 0.3;
-    double centerErrorThresh = 0.25; // normalized diagonal of the bounding box
+    double overlap_thresh = 0.3;
+    double center_error_thresh = 0.3; // normalized diagonal of the bounding box
     unsigned int reinit_count = 0;
 };

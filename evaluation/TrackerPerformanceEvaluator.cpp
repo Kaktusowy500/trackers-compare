@@ -3,94 +3,109 @@
 #include <numeric>
 #include <iostream>
 
+std::string ValidationStatusToString(ValidationStatus status)
+{
+  static std::map<ValidationStatus, std::string> map = {
+      {ValidationStatus::Valid, "Valid"},
+      {ValidationStatus::NonValidTrackingScore, "NonValidTrackingScore"},
+      {ValidationStatus::NonValidOverlap, "NonValidOverlap"},
+      {ValidationStatus::NonValidCenterError, "NonValidCenterError"}
+  };
+  return map[status];
+}
+
 TrackerPerformanceEvaluator::TrackerPerformanceEvaluator(const std::string &tracker_name) : tracker_name(tracker_name) {};
 
 // Private helper method to calculate the Intersection over Union (IoU) or overlap
-double TrackerPerformanceEvaluator::calculateOverlap(const cv::Rect &groundTruth, const cv::Rect &trackingResult)
+double TrackerPerformanceEvaluator::calculateOverlap(const cv::Rect &ground_truth, const cv::Rect &tracking_result)
 {
-  int intersectionArea = (groundTruth & trackingResult).area();
-  int unionArea = groundTruth.area() + trackingResult.area() - intersectionArea;
-  return static_cast<double>(intersectionArea) / unionArea;
+  int intersection_area = (ground_truth & tracking_result).area();
+  int union_area = ground_truth.area() + tracking_result.area() - intersection_area;
+  return static_cast<double>(intersection_area) / union_area;
 }
 
 // Private helper method to calculate the center localization error
-double TrackerPerformanceEvaluator::calculateCenterError(const cv::Rect &groundTruth, const cv::Rect &trackingResult)
+double TrackerPerformanceEvaluator::calculateCenterError(const cv::Rect &ground_truth, const cv::Rect &tracking_result)
 {
-  cv::Point2f gtCenter = (groundTruth.tl() + groundTruth.br()) * 0.5;
-  cv::Point2f trCenter = (trackingResult.tl() + trackingResult.br()) * 0.5;
-  return cv::norm(gtCenter - trCenter);
+  cv::Point2f gt_center = (ground_truth.tl() + ground_truth.br()) * 0.5;
+  cv::Point2f tr_center = (tracking_result.tl() + tracking_result.br()) * 0.5;
+  return cv::norm(gt_center - tr_center);
 }
 
 // Method to add a single frame's results
-bool TrackerPerformanceEvaluator::addFrameResult(const cv::Rect &groundTruth, const cv::Rect &trackingResult,
+ValidationStatus TrackerPerformanceEvaluator::addFrameResult(const cv::Rect& ground_truth, const cv::Rect& tracking_result,
                                                  double processing_time, bool valid)
 {
   FrameResult result;
-  result.overlap = calculateOverlap(groundTruth, trackingResult);
-  result.error = calculateCenterError(groundTruth, trackingResult);
+  ValidationStatus valid_status = ValidationStatus::Valid;
+  result.overlap = calculateOverlap(ground_truth, tracking_result);
+  result.error = calculateCenterError(ground_truth, tracking_result);
   result.processing_time = processing_time;
-  result.bbox_area = trackingResult.area();
+  result.bbox_area = tracking_result.area();
 
-  double diagonal = std::sqrt(std::pow(groundTruth.width, 2) + std::pow(groundTruth.height, 2));
-  double normalizedCentreError = result.error / diagonal;
-  bool tracking_valid = (result.overlap > overlapThresh && normalizedCentreError < centerErrorThresh);
-
-  result.valid = tracking_valid;
+  double diagonal = std::sqrt(std::pow(ground_truth.width, 2) + std::pow(ground_truth.height, 2));
+  double normalized_centre_error = result.error / diagonal;
+  if (result.overlap < overlap_thresh)
+    valid_status = ValidationStatus::NonValidOverlap;
+  if (normalized_centre_error > center_error_thresh)
+    valid_status = ValidationStatus::NonValidCenterError;
+  
+  result.valid = (valid_status == ValidationStatus::Valid);
   results.push_back(result);
-  return tracking_valid;
+  return valid_status;
 }
 
 // Method to calculate and return the average overlap
 double TrackerPerformanceEvaluator::getAverageOverlap() const
 {
-  double sumOverlap = 0.0;
-  int validCount = 0;
+  double sum_overlap = 0.0;
+  int valid_count = 0;
 
   for (const auto &result : results)
   {
     if (result.valid)
     {
-      sumOverlap += result.overlap;
-      validCount++;
+      sum_overlap += result.overlap;
+      valid_count++;
     }
   }
 
-  return validCount > 0 ? sumOverlap / validCount : 0.0;
+  return valid_count > 0 ? sum_overlap / valid_count : 0.0;
 }
 
 // Method to calculate and return the average center error
 double TrackerPerformanceEvaluator::getAverageError() const
 {
-  double sumError = 0.0;
-  int validCount = 0;
+  double sum_error = 0.0;
+  int valid_count = 0;
 
   for (const auto &result : results)
   {
     if (result.valid)
     {
-      sumError += result.error;
-      validCount++;
+      sum_error += result.error;
+      valid_count++;
     }
   }
 
-  return validCount > 0 ? sumError / validCount : 0.0;
+  return valid_count > 0 ? sum_error / valid_count : 0.0;
 }
 
 double TrackerPerformanceEvaluator::getAverageProcessingTime() const
 {
-  double sumProcessingTime = 0.0;
-  int validCount = 0;
+  double sum_processing_time = 0.0;
+  int valid_count = 0;
 
   for (const auto &result : results)
   {
     if (result.valid)
     {
-      sumProcessingTime += result.processing_time;
-      validCount++;
+      sum_processing_time += result.processing_time;
+      valid_count++;
     }
   }
 
-  return validCount > 0 ? sumProcessingTime / validCount : 0.0;
+  return valid_count > 0 ? sum_processing_time / valid_count : 0.0;
 }
 
 // Method to save the results to a file
