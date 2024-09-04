@@ -8,18 +8,16 @@ CSRTTracker::CSRTTracker()
 
 CSRTTracker::~CSRTTracker() {}
 
-void CSRTTracker::init(const cv::Mat &frame, const cv::Rect &roi)
+void CSRTTracker::init(const cv::Mat& frame, const cv::Rect& roi)
 {
     tracker->init(frame, roi);
-    state = TrackerState::Tracking;
+    setState(TrackerState::Tracking);
 }
 
-bool CSRTTracker::update(const cv::Mat &frame, cv::Rect &roi)
+bool CSRTTracker::update(const cv::Mat& frame, cv::Rect& roi)
 {
     bool ok = tracker->update(frame, roi);
-    if (!ok)
-    {
-        state = TrackerState::Lost;
-    }
+    TrackerState state_to_set = ok ? TrackerState::Tracking : TrackerState::Recovering;
+    setState(state_to_set);
     return ok;
 }

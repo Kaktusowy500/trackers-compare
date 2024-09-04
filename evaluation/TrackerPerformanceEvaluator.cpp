@@ -34,7 +34,7 @@ double TrackerPerformanceEvaluator::calculateCenterError(const cv::Rect &ground_
 
 // Method to add a single frame's results
 ValidationStatus TrackerPerformanceEvaluator::addFrameResult(const cv::Rect& ground_truth, const cv::Rect& tracking_result,
-                                                 double processing_time, bool valid)
+                                                 double processing_time)
 {
   FrameResult result;
   ValidationStatus valid_status = ValidationStatus::Valid;

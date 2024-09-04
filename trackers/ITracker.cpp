@@ -1,4 +1,5 @@
 #include "ITracker.hpp"
+#include <spdlog/spdlog.h>
 
 std::string stateToString(TrackerState state)
 {
@@ -7,7 +8,7 @@ std::string stateToString(TrackerState state)
         {TrackerState::Tracking, "Tracking"},
         {TrackerState::Recovering, "Recovering"},
         {TrackerState::Lost, "Lost"},
-        {TrackerState::ToBeReinited, "ToBeReinited"}};
+        {TrackerState::ToBeReinited, "ToBeReinited"} };
     return map[state];
 }
 
@@ -28,4 +29,12 @@ TrackerState ITracker::getState()
 ITracker::ITracker()
 {
     state = TrackerState::Ready;
+}
+
+void ITracker::setState(TrackerState s)
+{
+    if (state == s)
+        return;
+    spdlog::info("Tracker: {} state changed from {} to {}", name, stateToString(state), stateToString(s));
+    state = s;
 }

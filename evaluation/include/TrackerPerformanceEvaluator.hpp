@@ -26,9 +26,9 @@ std::string ValidationStatusToString(ValidationStatus status);
 class TrackerPerformanceEvaluator
 {
 public:
-    TrackerPerformanceEvaluator(const std::string &tracker_name);
+    TrackerPerformanceEvaluator(const std::string& tracker_name);
     // Method to add a single frame's results
-    ValidationStatus addFrameResult(const cv::Rect& ground_truth, const cv::Rect& tracking_result, double processing_time, bool valid = true);
+    ValidationStatus addFrameResult(const cv::Rect& ground_truth, const cv::Rect& tracking_result, double processing_time);
 
     // Method to calculate and return the average overlap
     double getAverageOverlap() const;
@@ -39,10 +39,10 @@ public:
     double getAverageProcessingTime() const;
 
     // Method to save the results to a file
-    void saveResultsToFile(const std::string &filename) const;
-    void trackingReinited(const ValidationStatus& reason)
+    void saveResultsToFile(const std::string& filename) const;
+    void trackingReinited()
     {
-        spdlog::debug("Tracker {} reinited, reason {}", tracker_name, ValidationStatusToString(reason));
+        spdlog::info("Tracker: {} reinited", tracker_name);
         reinit_count++;
     }
     unsigned int getReinitCount()
@@ -51,8 +51,8 @@ public:
     }
 
 private:
-    double calculateOverlap(const cv::Rect &ground_truth, const cv::Rect &tracking_result);
-    double calculateCenterError(const cv::Rect &ground_truth, const cv::Rect &tracking_result);
+    double calculateOverlap(const cv::Rect& ground_truth, const cv::Rect& tracking_result);
+    double calculateCenterError(const cv::Rect& ground_truth, const cv::Rect& tracking_result);
 
     std::vector<FrameResult> results;
     std::string tracker_name;

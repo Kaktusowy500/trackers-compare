@@ -10,19 +10,12 @@
 #include "VideoFileReader.hpp"
 #include "ImageSequenceReader.hpp"
 
-// Compare strategies
-// Reset imidiately after loss, count resets and avg tracking time
-// Reset after some time to allow recovery
-// One init and do not count when aim was lost
 
-// 2 validity info, one from tracker itself, one from evaluator
-
-enum class ReinitStrategy
+TrackerComparator::TrackerComparator()
 {
-    Immediate,
-    Delayed,
-    OneInit
-};
+    reinit_strategy = ReinitStrategy::OneInit;
+}
+
 
 void TrackerComparator::loadDataset(std::string path, bool only_video)
 {
@@ -120,6 +113,40 @@ bool TrackerComparator::readFirstFrameAndInit()
     return true;
 }
 
+void TrackerComparator::applyReinitStrategy(const cv::Mat& frame, int index, ValidationStatus reason)
+{
+    spdlog::debug("Try to apply reninit strategy to tracker {}, reason {}", trackers[index]->getName(), ValidationStatusToString(reason));
+
+    if (reinit_strategy == ReinitStrategy::Immediate)
+    {
+        if (ground_truths[frame_count].occluded != 1)
+        {
+            trackers[index]->init(frame, ground_truths[frame_count].rect);
+            evaluators[index]->trackingReinited();
+        }
+    }
+    else if (reinit_strategy == ReinitStrategy::OneInit)
+    {
+        if (evaluators[index]->getReinitCount() == 0) {
+            if (ground_truths[frame_count].occluded != 1)
+            {
+                trackers[index]->init(frame, ground_truths[frame_count].rect);
+                evaluators[index]->trackingReinited();
+            }
+            else
+            {
+                trackers[index]->setState(TrackerState::ToBeReinited);
+            }
+        }
+        else
+        {
+            trackers[index]->setState(TrackerState::Lost);
+        }
+    }
+
+    // TODO implement delayed reinit strategy
+}
+
 void TrackerComparator::runEvaluation()
 {
     if (!readFirstFrameAndInit())
@@ -140,17 +167,19 @@ void TrackerComparator::runEvaluation()
             for (int i = 0; i < trackers.size(); i++)
             {
                 cv::Rect bbox;
+
                 auto start_time = std::chrono::high_resolution_clock::now();
-                trackers[i]->update(frame, bbox);
+                if (trackers[i]->getState() != TrackerState::Lost && trackers[i]->getState() != TrackerState::ToBeReinited)
+                    trackers[i]->update(frame, bbox);
                 auto end_time = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> processing_time = end_time - start_time;
                 ValidationStatus valid_status = evaluators[i]->addFrameResult(ground_truths[frame_count].rect, bbox, processing_time.count());
 
                 bool tracking_valid = (trackers[i]->getState() == TrackerState::Tracking);
-                if (valid_status != ValidationStatus::Valid)
+                if (valid_status != ValidationStatus::Valid && trackers[i]->getState() != TrackerState::Lost)
                 {
-                    trackers[i]->init(frame, ground_truths[frame_count].rect);
-                    evaluators[i]->trackingReinited(valid_status);
+                    tracking_valid = false;
+                    applyReinitStrategy(frame, i, valid_status);
                 }
                 // if (tracking_valid)
                 // {
