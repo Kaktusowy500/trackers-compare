@@ -127,21 +127,7 @@ void TrackerComparator::applyReinitStrategy(const cv::Mat& frame, int index, Val
     }
     else if (reinit_strategy == ReinitStrategy::OneInit)
     {
-        if (evaluators[index]->getReinitCount() == 0) {
-            if (ground_truths[frame_count].occluded != 1)
-            {
-                trackers[index]->init(frame, ground_truths[frame_count].rect);
-                evaluators[index]->trackingReinited();
-            }
-            else
-            {
-                trackers[index]->setState(TrackerState::ToBeReinited);
-            }
-        }
-        else
-        {
-            trackers[index]->setState(TrackerState::Lost);
-        }
+        trackers[index]->setState(TrackerState::Lost);
     }
 
     // TODO implement delayed reinit strategy
@@ -173,7 +159,7 @@ void TrackerComparator::runEvaluation()
                     trackers[i]->update(frame, bbox);
                 auto end_time = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> processing_time = end_time - start_time;
-                ValidationStatus valid_status = evaluators[i]->addFrameResult(ground_truths[frame_count].rect, bbox, processing_time.count());
+                ValidationStatus valid_status = evaluators[i]->validateAndAddResult(ground_truths[frame_count].rect, bbox, processing_time.count(), trackers[i]->getState() == TrackerState::Lost);
 
                 bool tracking_valid = (trackers[i]->getState() == TrackerState::Tracking);
                 if (valid_status != ValidationStatus::Valid && trackers[i]->getState() != TrackerState::Lost)
