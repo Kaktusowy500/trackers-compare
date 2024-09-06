@@ -1,0 +1,12 @@
+trackers:
+  dasiam:
+    score_thresh: 0.8
+  vit:
+    score_thresh: 0.3
+
+evaluation:
+  overlap_thresh: 0.3
+  center_error_thresh: 0.3
+
+# one_init, immediate
+reinit_strategy: "one_init"

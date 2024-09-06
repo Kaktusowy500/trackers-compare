@@ -11,11 +11,22 @@
 #include "ImageSequenceReader.hpp"
 
 
-TrackerComparator::TrackerComparator()
+TrackerComparator::TrackerComparator(const YAML::Node& config) : config(config)
 {
-    reinit_strategy = ReinitStrategy::OneInit;
+    parseReinitStrategy(config["reinit_strategy"].as<std::string>());
 }
 
+void TrackerComparator::parseReinitStrategy(const std::string& strategy)
+{
+    if (strategy == "immediate")
+        reinit_strategy = ReinitStrategy::Immediate;
+    else if (strategy == "delayed")
+        reinit_strategy = ReinitStrategy::Delayed;
+    else if (strategy == "one_init")
+        reinit_strategy = ReinitStrategy::OneInit;
+    else
+        spdlog::error("Unknown reinit strategy: {}", strategy);
+}
 
 void TrackerComparator::loadDataset(std::string path, bool only_video)
 {
@@ -63,13 +74,17 @@ bool TrackerComparator::setupTrackersAndEvaluators()
     try
     {
         trackers.push_back(std::make_unique<CSRTTracker>());
-        trackers.push_back(std::make_unique<VITTracker>());
-        trackers.push_back(std::make_unique<DaSiamTracker>());
+        trackers.push_back(std::make_unique<VITTracker>(config["trackers"]["vit"]["score_thresh"].as<double>()));
+        trackers.push_back(std::make_unique<DaSiamTracker>(config["trackers"]["dasiam"]["score_thresh"].as<double>()));
         colors = std::vector<cv::Scalar>({ cv::Scalar(255, 50, 150), cv::Scalar(0, 255, 0), cv::Scalar(255, 0, 0) });
 
+        TrackerPerformanceEvaluatorArgs args;
+        args.overlap_thresh = config["evaluation"]["overlap_thresh"].as<double>();
+        args.center_error_thresh = config["evaluation"]["center_error_thresh"].as<double>();
         for (const auto& t : trackers)
         {
-            evaluators.push_back(std::make_unique<TrackerPerformanceEvaluator>(t->getName()));
+            args.tracker_name = t->getName();
+            evaluators.push_back(std::make_unique<TrackerPerformanceEvaluator>(args));
         }
         return true;
     }
@@ -115,12 +130,12 @@ bool TrackerComparator::readFirstFrameAndInit()
 
 void TrackerComparator::applyReinitStrategy(const cv::Mat& frame, int index, ValidationStatus reason)
 {
-    spdlog::debug("Try to apply reninit strategy to tracker {}, reason {}", trackers[index]->getName(), ValidationStatusToString(reason));
 
     if (reinit_strategy == ReinitStrategy::Immediate)
     {
         if (ground_truths[frame_count].occluded != 1)
         {
+            spdlog::debug("Try to apply reninit strategy to tracker {}, reason {}", trackers[index]->getName(), ValidationStatusToString(reason));
             trackers[index]->init(frame, ground_truths[frame_count].rect);
             evaluators[index]->trackingReinited();
         }

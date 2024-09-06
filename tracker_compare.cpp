@@ -8,6 +8,7 @@
 #include <opencv2/tracking.hpp>
 #include <spdlog/spdlog.h>
 #include "spdlog/cfg/env.h"
+#include <yaml-cpp/yaml.h>
 #include "DatasetUtils.hpp"
 #include "VideoFileReader.hpp"
 #include "ImageSequenceReader.hpp"
@@ -34,6 +35,8 @@ int main(int argc, char** argv)
 {
   spdlog::cfg::load_env_levels();
   spdlog::info("Tracker Compare started");
+  YAML::Node config = YAML::LoadFile("config/general.yaml");
+  
   bool preview_only = false;
   if (argc < 2)
   {
@@ -50,7 +53,7 @@ int main(int argc, char** argv)
     preview_only = true;
   }
   
-  auto trackerComparator = std::make_unique<TrackerComparator>();
+  auto trackerComparator = std::make_unique<TrackerComparator>(config);
   trackerComparator->loadDataset(argv[1], preview_only);
   trackerComparator->setupComponents();
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <yaml-cpp/yaml.h>
 #include "DatasetUtils.hpp"
 #include "VideoReader.hpp"
 #include "ITracker.hpp"
@@ -24,7 +25,7 @@ enum class ReinitStrategy
 class TrackerComparator
 {
 public:
-    TrackerComparator();
+    TrackerComparator(const YAML::Node& config);
     void loadDataset(std::string path, bool only_video = false);
     bool setupComponents();
     void runEvaluation();
@@ -35,6 +36,7 @@ private:
     bool setupVideoReader();
     bool setupTrackersAndEvaluators();
     void convertGTToNonNormalized(int imgWidth, int imgHeight);
+    void parseReinitStrategy(const std::string& strategy);
     void applyReinitStrategy(const cv::Mat& frame, int index, ValidationStatus valid_status);
 
     DatasetInfo dataset_info;
@@ -45,6 +47,7 @@ private:
     std::vector<cv::Scalar> colors;
     cv::Mat frame;
     ReinitStrategy reinit_strategy;
+    const YAML::Node& config;
     unsigned int frame_count = 0;
 
 };

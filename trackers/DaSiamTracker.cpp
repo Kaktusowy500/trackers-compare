@@ -1,6 +1,6 @@
 #include "DaSiamTracker.hpp"
 
-DaSiamTracker::DaSiamTracker()
+DaSiamTracker::DaSiamTracker(double score_thresh): score_thresh(score_thresh)
 {
     name = "DaSiam";
     cv::TrackerDaSiamRPN::Params params;
@@ -8,7 +8,6 @@ DaSiamTracker::DaSiamTracker()
     params.kernel_cls1 = "nn_models/dasiamrpn_kernel_cls1.onnx";
     params.kernel_r1 = "nn_models/dasiamrpn_kernel_r1.onnx";
     tracker = cv::TrackerDaSiamRPN::create(params);
-    scoreThresh = 0.8;
 }
 
 DaSiamTracker::~DaSiamTracker() {}
@@ -23,7 +22,7 @@ bool DaSiamTracker::update(const cv::Mat& frame, cv::Rect& roi)
 {
     bool ok = tracker->update(frame, roi);
     double score = getTrackingScore();
-    TrackerState state_to_set = score >= scoreThresh ? TrackerState::Tracking : TrackerState::Recovering;
+    TrackerState state_to_set = score >= score_thresh ? TrackerState::Tracking : TrackerState::Recovering;
     setState(state_to_set);
 
     return ok;

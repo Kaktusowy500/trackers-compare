@@ -23,10 +23,17 @@ enum class ValidationStatus
 };
 std::string ValidationStatusToString(ValidationStatus status);
 
+struct TrackerPerformanceEvaluatorArgs
+{
+    std::string tracker_name;
+    double overlap_thresh = 0.3;
+    double center_error_thresh = 0.3;
+};
+
 class TrackerPerformanceEvaluator
 {
 public:
-    TrackerPerformanceEvaluator(const std::string& tracker_name);
+    TrackerPerformanceEvaluator(const TrackerPerformanceEvaluatorArgs& args);
     // Method to add a single frame's results
     ValidationStatus validateAndAddResult(const cv::Rect& ground_truth, const cv::Rect& tracking_result, double processing_time, bool prior_valid);
 
@@ -57,8 +64,9 @@ private:
 
     std::vector<FrameResult> results;
     std::string tracker_name;
-    // params
+    // params loaded from config
     double overlap_thresh = 0.3;
     double center_error_thresh = 0.3; // normalized diagonal of the bounding box
+    
     unsigned int reinit_count = 0;
 };

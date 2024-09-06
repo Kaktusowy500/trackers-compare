@@ -14,7 +14,12 @@ std::string ValidationStatusToString(ValidationStatus status)
   return map[status];
 }
 
-TrackerPerformanceEvaluator::TrackerPerformanceEvaluator(const std::string& tracker_name) : tracker_name(tracker_name) {};
+TrackerPerformanceEvaluator::TrackerPerformanceEvaluator(const TrackerPerformanceEvaluatorArgs& args)
+{
+  tracker_name = args.tracker_name;
+  overlap_thresh = args.overlap_thresh;
+  center_error_thresh = args.center_error_thresh;
+}
 
 // Private helper method to calculate the Intersection over Union (IoU) or overlap
 double TrackerPerformanceEvaluator::calculateOverlap(const cv::Rect& ground_truth, const cv::Rect& tracking_result)
