@@ -38,6 +38,7 @@ private:
     void convertGTToNonNormalized(int imgWidth, int imgHeight);
     void parseReinitStrategy(const std::string& strategy);
     void applyReinitStrategy(const cv::Mat& frame, int index, ValidationStatus valid_status);
+    unsigned calcWaitTime();
 
     DatasetInfo dataset_info;
     std::unique_ptr<VideoReader> video_reader;
@@ -48,6 +49,7 @@ private:
     cv::Mat frame;
     ReinitStrategy reinit_strategy;
     const YAML::Node& config;
+    std::chrono::time_point<std::chrono::steady_clock> start_frame_processing_time;
     unsigned int frame_count = 0;
 
 };

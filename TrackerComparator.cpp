@@ -1,5 +1,6 @@
 #include <sstream>
 #include <fstream>
+#include <chrono>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h> 
 #include "TrackerComparator.hpp"
@@ -95,6 +96,16 @@ bool TrackerComparator::setupTrackersAndEvaluators()
     }
 }
 
+unsigned TrackerComparator::calcWaitTime()
+{
+    static constexpr unsigned desired_frame_processing_time = 30;
+    std::chrono::duration<double, std::milli> elapsed = std::chrono::steady_clock::now() - start_frame_processing_time;
+    int to_wait = desired_frame_processing_time - elapsed.count();
+    to_wait = to_wait > 0 ? to_wait : 1;
+    return to_wait;
+}
+
+
 bool TrackerComparator::setupComponents()
 {
     if (setupVideoReader() && setupTrackersAndEvaluators())
@@ -157,6 +168,7 @@ void TrackerComparator::runEvaluation()
     {
         if (video_reader->getNextFrame(frame))
         {
+            start_frame_processing_time = std::chrono::steady_clock::now();
             cv::Mat frame_vis = frame.clone();
             if (frame_count >= ground_truths.size())
             {
@@ -198,7 +210,8 @@ void TrackerComparator::runEvaluation()
             }
 
             cv::imshow("Frame", frame_vis);
-            if (cv::waitKey(10) >= 0)
+            unsigned to_wait = calcWaitTime();
+            if (cv::waitKey(to_wait) >= 0)
                 break; // Press any key to exit
             frame_count++;
         }
@@ -228,6 +241,7 @@ void TrackerComparator::runPreview(std::string tracker_name)
 
         if (video_reader->getNextFrame(frame))
         {
+            start_frame_processing_time = std::chrono::steady_clock::now();
             cv::Rect bbox;
             bool tracking_valid = (trackers[tracker_id]->getState() == TrackerState::Tracking);
             if (tracking_valid)
@@ -252,7 +266,8 @@ void TrackerComparator::runPreview(std::string tracker_name)
                 cv::Point(10, (frame.rows - 20)), cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
 
             cv::imshow("Frame", frame);
-            auto key = cv::waitKey(30);
+            unsigned to_wait = calcWaitTime();
+            auto key = cv::waitKey(to_wait);
             if (key == 's')
             {
                 cv::Rect bbox = cv::selectROI("Frame", frame, false);
