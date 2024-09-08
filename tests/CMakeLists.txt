@@ -11,8 +11,11 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable(test_dataset_utils test_dataset_utils.cpp)
-
 target_link_libraries(test_dataset_utils gtest_main utils)
+
+add_executable(test_dataset_infos_loader test_dataset_infos_loader.cpp)
+target_link_libraries(test_dataset_infos_loader gtest_main utils)
 
 include(GoogleTest)
 gtest_discover_tests(test_dataset_utils)
+gtest_discover_tests(test_dataset_infos_loader)

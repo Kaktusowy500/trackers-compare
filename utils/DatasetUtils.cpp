@@ -1,5 +1,6 @@
 #include "DatasetUtils.hpp"
 #include <fstream>
+#include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 
@@ -18,13 +19,62 @@ std::ostream& operator<<(std::ostream& os, const DatasetInfo& datasetInfo)
     return os;
 }
 
+std::vector<DatasetInfo> loadDatasetInfos(const std::string& path)
+{
+    std::vector<DatasetInfo> dataset_infos;
+    auto datasets_paths = getAllDirectories(path);
+    if(datasets_paths.empty())
+    {
+        spdlog::debug("No directories in provided path, assuming it is path to dataset instance");
+        DatasetInfo dataset_info = getDatasetInfo(path);
+        if (dataset_info.dataset_type != DatasetType::Unknown)
+        {
+            dataset_infos.push_back(dataset_info);
+        }
+    }
+    else
+    {
+        for (const auto& dataset_path : datasets_paths)
+        {
+            DatasetInfo dataset_info = getDatasetInfo(dataset_path.string());
+            if (dataset_info.dataset_type != DatasetType::Unknown)
+            {
+                dataset_infos.push_back(dataset_info);
+            }
+        }
+    }
+    spdlog::debug("Loaded {} dataset infos", dataset_infos.size());
+    return dataset_infos;
+}
+
+
+std::vector<std::filesystem::path> getAllDirectories(const std::string& path)
+{
+    std::vector<std::filesystem::path> directories;
+
+    if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path))
+    {
+        spdlog::error("The provided path is not a directory.");
+        return directories;
+    }
+
+    for (const auto& entry : std::filesystem::directory_iterator(path))
+    {
+        if (entry.is_directory())
+        {
+            directories.push_back(entry.path());
+        }
+    }
+    return directories;
+}
+
 DatasetInfo getDatasetInfo(const std::string& path)
 {
     DatasetInfo dataset_info;
     if (fs::is_directory(path))
     {
         std::filesystem::path dir_path(path);
-        dataset_info.name = dir_path.parent_path().filename().string();
+        dataset_info.name = dir_path.filename().string();
         for (const auto& entry : fs::directory_iterator(path))
         {
             if (entry.is_regular_file() && entry.path().extension() == ".mp4")
@@ -45,7 +95,7 @@ DatasetInfo getDatasetInfo(const std::string& path)
     }
     else
     {
-        std::cerr << "The provided path is not a directory." << std::endl;
+        spdlog::error("Cannot get the dataset info, the provided path {} is not a directory", path);
     }
     return dataset_info;
 }
@@ -61,7 +111,7 @@ std::vector<Annotation> loadOTBAnnotations(const std::string& filename)
 
     if (!file.is_open())
     {
-        std::cerr << "Could not open the file: " << filename << std::endl;
+        spdlog::error("Could not open the annotation file: {}", filename);
         return annotations;
     }
     unsigned int frame_num = 0;
@@ -94,7 +144,7 @@ std::vector<Annotation> loadCustomAnnotations(const std::string& filename)
 
     if (!file.is_open())
     {
-        std::cerr << "Could not open the file: " << filename << std::endl;
+        spdlog::error("Could not open the annotation file: {}", filename);
         return annotations;
     }
 
