@@ -26,11 +26,13 @@ class TrackerComparator
 {
 public:
     TrackerComparator(const YAML::Node& config);
-    void loadDataset(std::string path, bool only_video = false);
+    void loadDataset(const DatasetInfo& d_info);
+    void loadVideoOnlyDataset(const std::string& path);
     bool setupComponents();
     void runEvaluation();
-    void runPreview(std::string tracker_name);
-    void saveResults(std::string path);
+    void runPreview(const std::string & tracker_name);
+    void saveResults(const std::string & path);
+    void reset();
 private:
     bool readFirstFrameAndInit();
     bool setupVideoReader();
@@ -47,10 +49,11 @@ private:
     std::vector<std::unique_ptr<TrackerPerformanceEvaluator>> evaluators;
     std::vector<cv::Scalar> colors;
     cv::Mat frame;
-    ReinitStrategy reinit_strategy;
-    const YAML::Node& config;
     std::chrono::time_point<std::chrono::steady_clock> start_frame_processing_time;
     unsigned int frame_count = 0;
+
+    const YAML::Node& config;
+    ReinitStrategy reinit_strategy;
 
 };
 

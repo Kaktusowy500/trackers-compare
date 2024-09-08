@@ -29,16 +29,9 @@ void TrackerComparator::parseReinitStrategy(const std::string& strategy)
         spdlog::error("Unknown reinit strategy: {}", strategy);
 }
 
-void TrackerComparator::loadDataset(std::string path, bool only_video)
-{
-    if (only_video)
-    {
-        dataset_info.media_path = path;
-        dataset_info.dataset_type = DatasetType::VideoOnly;
-        return;
-    }
-
-    dataset_info = getDatasetInfo(path);
+void TrackerComparator::loadDataset(const DatasetInfo& d_info)
+{   
+    dataset_info = d_info;
     spdlog::debug("Dataset info: \n{}", fmt::streamed(dataset_info));
     if (dataset_info.dataset_type == DatasetType::Custom)
     {
@@ -53,7 +46,7 @@ void TrackerComparator::loadDataset(std::string path, bool only_video)
 
 bool TrackerComparator::setupVideoReader()
 {
-
+    
     if (dataset_info.dataset_type == DatasetType::OTB)
     {
         video_reader = std::make_unique<ImageSequenceReader>(dataset_info.media_path);
@@ -112,11 +105,21 @@ bool TrackerComparator::setupComponents()
     {
         return true;
     }
+    
     return false;
+}
+
+void TrackerComparator::reset(){
+    dataset_info = DatasetInfo();
+    video_reader.reset();
+    trackers.clear();
+    evaluators.clear();
+    ground_truths.clear();
 }
 
 bool TrackerComparator::readFirstFrameAndInit()
 {
+    frame_count = 0;
     if (video_reader->getNextFrame(frame))
     {
         if (dataset_info.dataset_type == DatasetType::Custom)
@@ -218,7 +221,7 @@ void TrackerComparator::runEvaluation()
     }
 }
 
-void TrackerComparator::runPreview(std::string tracker_name)
+void TrackerComparator::runPreview(const std::string& tracker_name)
 {
     int tracker_id = -1;
     for (int i = 0; i < trackers.size(); i++)
@@ -281,7 +284,7 @@ void TrackerComparator::runPreview(std::string tracker_name)
 }
 
 
-void TrackerComparator::saveResults(std::string path)
+void TrackerComparator::saveResults(const std::string& path)
 {
 
     std::string summary_file_path = path + "/" + "summary.csv";
@@ -302,6 +305,14 @@ void TrackerComparator::saveResults(std::string path)
 
     spdlog::info("Results saved to: {}", path);
 }
+
+
+void TrackerComparator::loadVideoOnlyDataset(const std::string& path)
+{
+    dataset_info.media_path = path;
+    dataset_info.dataset_type = DatasetType::VideoOnly;
+}
+
 
 void TrackerComparator::convertGTToNonNormalized(int imgWidth, int imgHeight)
 {

@@ -36,7 +36,7 @@ int main(int argc, char** argv)
   spdlog::cfg::load_env_levels();
   spdlog::info("Tracker Compare started");
   YAML::Node config = YAML::LoadFile("config/general.yaml");
-  
+
   bool preview_only = false;
   if (argc < 2)
   {
@@ -52,20 +52,26 @@ int main(int argc, char** argv)
     }
     preview_only = true;
   }
-  
+
   auto trackerComparator = std::make_unique<TrackerComparator>(config);
-  trackerComparator->loadDataset(argv[1], preview_only);
-  trackerComparator->setupComponents();
 
   if (preview_only)
   {
+    trackerComparator->loadVideoOnlyDataset(argv[1]);
+    trackerComparator->setupComponents();
     trackerComparator->runPreview(argv[3]);
+    return 0;
   }
-  else
+
+  auto dataset_infos = loadDatasetInfos(argv[1]);
+  for (const auto& dataset_info : dataset_infos)
   {
+    trackerComparator->loadDataset(dataset_info);
+    trackerComparator->setupComponents();
     std::string createdDir = createDirectoryWithTimestamp();
     trackerComparator->runEvaluation();
     trackerComparator->saveResults(createdDir);
+    trackerComparator->reset();
   }
 
   return 0;
