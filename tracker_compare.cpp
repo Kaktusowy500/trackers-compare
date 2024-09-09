@@ -64,15 +64,21 @@ int main(int argc, char** argv)
   }
 
   auto dataset_infos = loadDatasetInfos(argv[1]);
+  std::string results_dir = createDirectoryWithTimestamp();
   for (const auto& dataset_info : dataset_infos)
   {
     trackerComparator->loadDataset(dataset_info);
     trackerComparator->setupComponents();
-    std::string createdDir = createDirectoryWithTimestamp();
     trackerComparator->runEvaluation();
-    trackerComparator->saveResults(createdDir);
+
+    std::string instance_results_dir = results_dir + "/" + dataset_info.name;
+    std::filesystem::create_directories(instance_results_dir);
+    trackerComparator->saveResults(instance_results_dir);
+
     trackerComparator->reset();
   }
+  std::ofstream fout(results_dir + "/config.yaml");
+  fout << config;
 
   return 0;
 }

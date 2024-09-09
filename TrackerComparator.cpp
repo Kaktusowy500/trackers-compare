@@ -15,6 +15,12 @@
 TrackerComparator::TrackerComparator(const YAML::Node& config) : config(config)
 {
     parseReinitStrategy(config["reinit_strategy"].as<std::string>());
+    if (config["mode"].as<std::string>() == "debug")
+        desired_frame_processing_time = 30;
+    else if (config["mode"].as<std::string>() == "eval")
+        desired_frame_processing_time = 1;
+    else
+        spdlog::warn("Unknown mode: {}", config["mode"].as<std::string>());
 }
 
 void TrackerComparator::parseReinitStrategy(const std::string& strategy)
@@ -30,7 +36,7 @@ void TrackerComparator::parseReinitStrategy(const std::string& strategy)
 }
 
 void TrackerComparator::loadDataset(const DatasetInfo& d_info)
-{   
+{
     dataset_info = d_info;
     spdlog::debug("Dataset info: \n{}", fmt::streamed(dataset_info));
     if (dataset_info.dataset_type == DatasetType::Custom)
@@ -46,7 +52,7 @@ void TrackerComparator::loadDataset(const DatasetInfo& d_info)
 
 bool TrackerComparator::setupVideoReader()
 {
-    
+
     if (dataset_info.dataset_type == DatasetType::OTB)
     {
         video_reader = std::make_unique<ImageSequenceReader>(dataset_info.media_path);
@@ -91,7 +97,6 @@ bool TrackerComparator::setupTrackersAndEvaluators()
 
 unsigned TrackerComparator::calcWaitTime()
 {
-    static constexpr unsigned desired_frame_processing_time = 30;
     std::chrono::duration<double, std::milli> elapsed = std::chrono::steady_clock::now() - start_frame_processing_time;
     int to_wait = desired_frame_processing_time - elapsed.count();
     to_wait = to_wait > 0 ? to_wait : 1;
@@ -105,11 +110,11 @@ bool TrackerComparator::setupComponents()
     {
         return true;
     }
-    
+
     return false;
 }
 
-void TrackerComparator::reset(){
+void TrackerComparator::reset() {
     dataset_info = DatasetInfo();
     video_reader.reset();
     trackers.clear();
@@ -131,7 +136,6 @@ bool TrackerComparator::readFirstFrameAndInit()
             t->init(frame, ground_truths[frame_count].rect);
         }
         cv::rectangle(frame, ground_truths[frame_count].rect, cv::Scalar(0, 0, 255), 2, 1);
-        cv::imshow("First frame", frame);
         frame_count++;
     }
     else

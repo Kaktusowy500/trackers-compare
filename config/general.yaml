@@ -1,3 +1,4 @@
+
 trackers:
   dasiam:
     score_thresh: 0.8
@@ -10,3 +11,6 @@ evaluation:
 
 # one_init, immediate
 reinit_strategy: "one_init"
+
+# debug, eval - eval reduces for eg. waiting time between frames
+mode: "eval"

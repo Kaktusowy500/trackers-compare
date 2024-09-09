@@ -50,6 +50,7 @@ private:
     std::vector<cv::Scalar> colors;
     cv::Mat frame;
     std::chrono::time_point<std::chrono::steady_clock> start_frame_processing_time;
+    unsigned int desired_frame_processing_time = 0;
     unsigned int frame_count = 0;
 
     const YAML::Node& config;
