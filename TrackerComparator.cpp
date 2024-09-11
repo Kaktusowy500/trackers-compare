@@ -291,21 +291,27 @@ void TrackerComparator::runPreview(const std::string& tracker_name)
 void TrackerComparator::saveResults(const std::string& path)
 {
 
-    std::string summary_file_path = path + "/" + "summary.csv";
+    std::string summary_file_path = path + "/" + "summary.yaml";
     std::ofstream summary_file(summary_file_path);
     if (!summary_file.is_open())
     {
         std::cerr << "Could not open the file: " << summary_file_path << std::endl;
         return;
     }
-    summary_file << "Tracker Name,Reinit" << std::endl;
+    
+    YAML::Emitter out;
+    out << YAML::BeginMap;
 
     for (int i = 0; i < trackers.size(); i++)
     {
-        std::string filename = path + "/" + trackers[i]->getName() + "_results.csv";
+        auto tracker_name = trackers[i]->getName();
+        std::string filename = path + "/" + tracker_name + "_results.csv";
         evaluators[i]->saveResultsToFile(filename);
-        summary_file << trackers[i]->getName() << "," << evaluators[i]->getReinitCount() << std::endl;
+        auto summary = evaluators[i]->getTrackingSummary();
+        out << YAML::Key << tracker_name << YAML::Value << summary;
     }
+    out << YAML::EndMap;
+    summary_file << out.c_str();
 
     spdlog::info("Results saved to: {}", path);
 }

@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 #include <string>
+#include "SequenceTrackingSummary.hpp"
 
 struct FrameResult
 {
@@ -21,6 +22,7 @@ enum class ValidationStatus
     NonValidOverlap,
     NonValidCenterError
 };
+
 std::string ValidationStatusToString(ValidationStatus status);
 
 struct TrackerPerformanceEvaluatorArgs
@@ -48,6 +50,9 @@ public:
 
     // Method to save the results to a file
     void saveResultsToFile(const std::string& filename) const;
+
+    SequenceTrackingSummary getTrackingSummary();
+
     void trackingReinited()
     {
         spdlog::info("Tracker: {} reinited", tracker_name);

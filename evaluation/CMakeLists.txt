@@ -1,5 +1,6 @@
 add_library(evaluation
-TrackerPerformanceEvaluator.cpp
+    TrackerPerformanceEvaluator.cpp
+    SequenceTrackingSummary.cpp
 )
 
 target_include_directories(evaluation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

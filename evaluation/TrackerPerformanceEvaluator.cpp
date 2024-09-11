@@ -143,6 +143,19 @@ void TrackerPerformanceEvaluator::saveResultsToFile(const std::string& filename)
     file << i + 1 << "," << results[i].overlap << "," << results[i].error << "," << results[i].processing_time << "," << results[i].bbox_area << "," << results[i].valid << "\n";
   }
 
+  file.close();
+}
+
+SequenceTrackingSummary TrackerPerformanceEvaluator::getTrackingSummary()
+{
+  SequenceTrackingSummary summary;
+  summary.average_overlap = getAverageOverlap();
+  summary.average_error = getAverageError();
+  summary.average_processing_time = getAverageProcessingTime();
+  summary.valid_frame_percent = getValidFramePercent();
+  summary.reinit_count = reinit_count;
+
+
   spdlog::info("Tracker: {} statistics:\n"
     "Average Overlap: {}\n"
     "Average Center Error: {}\n"
@@ -150,11 +163,11 @@ void TrackerPerformanceEvaluator::saveResultsToFile(const std::string& filename)
     "Valid Time Tracking Percentage: {}\n"
     "Reinit number: {}",
     tracker_name,
-    getAverageOverlap(),
-    getAverageError(),
-    getAverageProcessingTime(),
-    getValidFramePercent(),
-    reinit_count);
+    summary.average_overlap,
+    summary.average_error,
+    summary.average_processing_time,
+    summary.valid_frame_percent,
+    summary.reinit_count);
 
-  file.close();
+  return summary;
 }
