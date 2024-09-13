@@ -135,7 +135,7 @@ bool TrackerComparator::readFirstFrameAndInit()
         {
             t->init(frame, ground_truths[frame_count].rect);
         }
-        cv::rectangle(frame, ground_truths[frame_count].rect, cv::Scalar(0, 0, 255), 2, 1);
+        cv::rectangle(frame, ground_truths[frame_count].rect, cv::Scalar(0, 255, 255), 2, 1);
         frame_count++;
     }
     else
@@ -182,7 +182,7 @@ void TrackerComparator::runEvaluation()
                 spdlog::error("Ground truth vector size exceeded");
                 break;
             }
-            cv::rectangle(frame_vis, ground_truths[frame_count].rect, cv::Scalar(0, 0, 255), 2, 1);
+            cv::rectangle(frame_vis, ground_truths[frame_count].rect, cv::Scalar(0, 255, 255), 2, 1);
 
             for (int i = 0; i < trackers.size(); i++)
             {
