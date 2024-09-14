@@ -10,7 +10,9 @@ evaluation:
   center_error_thresh: 0.3
 
 # one_init, immediate
-reinit_strategy: "one_init"
+# reinit_strategy: "one_init"
+reinit_strategy: "immediate"
 
 # debug, eval - eval reduces for eg. waiting time between frames
 mode: "eval"
+save_video: False

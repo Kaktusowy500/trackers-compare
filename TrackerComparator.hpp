@@ -28,7 +28,7 @@ public:
     TrackerComparator(const YAML::Node& config);
     void loadDataset(const DatasetInfo& d_info);
     void loadVideoOnlyDataset(const std::string& path);
-    bool setupComponents();
+    bool setupComponents(const std::string & instance_results_dir = "");
     void runEvaluation();
     void runPreview(const std::string & tracker_name);
     void saveResults(const std::string & path);
@@ -37,6 +37,7 @@ private:
     bool readFirstFrameAndInit();
     bool setupVideoReader();
     bool setupTrackersAndEvaluators();
+    void setupVideoWriter(const std::string& instance_results_dir);
     void convertGTToNonNormalized(int imgWidth, int imgHeight);
     void parseReinitStrategy(const std::string& strategy);
     void applyReinitStrategy(const cv::Mat& frame, int index, ValidationStatus valid_status);
@@ -44,6 +45,7 @@ private:
 
     DatasetInfo dataset_info;
     std::unique_ptr<VideoReader> video_reader;
+    cv::VideoWriter video_writer;
     std::vector<Annotation> ground_truths;
     std::vector<std::unique_ptr<ITracker>> trackers;
     std::vector<std::unique_ptr<TrackerPerformanceEvaluator>> evaluators;

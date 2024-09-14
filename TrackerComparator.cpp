@@ -103,11 +103,21 @@ unsigned TrackerComparator::calcWaitTime()
     return to_wait;
 }
 
-
-bool TrackerComparator::setupComponents()
+void TrackerComparator::setupVideoWriter(const std::string& instance_results_dir)
 {
+    int codec = cv::VideoWriter::fourcc('m', 'p', '4', 'v');
+    video_writer.open(instance_results_dir + "/video.mp4", codec, 25, cv::Size(1280, 720), true);
+}
+
+
+bool TrackerComparator::setupComponents(const std::string& instance_results_dir)
+{
+
     if (setupVideoReader() && setupTrackersAndEvaluators())
     {
+        if (config["save_video"].as<bool>() && !instance_results_dir.empty())
+            setupVideoWriter(instance_results_dir);
+
         return true;
     }
 
@@ -136,6 +146,7 @@ bool TrackerComparator::readFirstFrameAndInit()
             t->init(frame, ground_truths[frame_count].rect);
         }
         cv::rectangle(frame, ground_truths[frame_count].rect, cv::Scalar(0, 255, 255), 2, 1);
+        video_writer.write(frame);
         frame_count++;
     }
     else
@@ -215,7 +226,7 @@ void TrackerComparator::runEvaluation()
                     trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore()),
                     cv::Point(10, (frame_vis.rows - 20) - 30 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
             }
-
+            video_writer.write(frame_vis);
             cv::imshow("Frame", frame_vis);
             unsigned to_wait = calcWaitTime();
             if (cv::waitKey(to_wait) >= 0)
@@ -298,7 +309,7 @@ void TrackerComparator::saveResults(const std::string& path)
         std::cerr << "Could not open the file: " << summary_file_path << std::endl;
         return;
     }
-    
+
     YAML::Emitter out;
     out << YAML::BeginMap;
 

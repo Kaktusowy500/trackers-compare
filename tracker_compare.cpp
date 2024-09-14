@@ -67,12 +67,13 @@ int main(int argc, char** argv)
   std::string results_dir = createDirectoryWithTimestamp();
   for (const auto& dataset_info : dataset_infos)
   {
-    trackerComparator->loadDataset(dataset_info);
-    trackerComparator->setupComponents();
-    trackerComparator->runEvaluation();
-
     std::string instance_results_dir = results_dir + "/" + dataset_info.name;
     std::filesystem::create_directories(instance_results_dir);
+    
+    trackerComparator->loadDataset(dataset_info);
+    trackerComparator->setupComponents(instance_results_dir);
+    trackerComparator->runEvaluation();
+
     trackerComparator->saveResults(instance_results_dir);
 
     trackerComparator->reset();
