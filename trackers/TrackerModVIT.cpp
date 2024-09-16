@@ -95,6 +95,14 @@ namespace cv {
         dst = (dst - mean) / std;
     }
 
+    double calculate_overlap(const cv::Rect& bb1, const cv::Rect& bb2)
+    {
+        int intersection_area = (bb1 & bb2).area();
+        int union_area = bb1.area() + bb2.area() - intersection_area;
+        return static_cast<double>(intersection_area) / union_area;
+    }
+
+
     static Mat hann1d(int sz, bool centered = true) {
         Mat hanningWindow(sz, 1, CV_32FC1);
         float* data = hanningWindow.ptr<float>(0);
@@ -174,19 +182,61 @@ namespace cv {
 
         multiply(conf_map, (1.0 - hanningWindow), conf_map);
 
-        double maxVal;
-        Point maxLoc;
-        minMaxLoc(conf_map, nullptr, &maxVal, nullptr, &maxLoc);
-        tracking_score = static_cast<float>(maxVal);
+        std::vector<Rect> maxRects;
+        std::vector<double> maxScores;
+        Mat conf_map_copy = conf_map.clone();
 
-        float cx = (maxLoc.x + offset_map.at<float>(0, maxLoc.y, maxLoc.x)) / 16;
-        float cy = (maxLoc.y + offset_map.at<float>(1, maxLoc.y, maxLoc.x)) / 16;
-        float w = size_map.at<float>(0, maxLoc.y, maxLoc.x);
-        float h = size_map.at<float>(1, maxLoc.y, maxLoc.x);
+        //Take 5 highest scores
+        for (int i = 0; i < 5; i++)
+        {
+            double maxVal;
+            Point maxLoc;
+            minMaxLoc(conf_map_copy, nullptr, &maxVal, nullptr, &maxLoc);
 
-        Rect finalres = returnfromcrop(cx - w / 2, cy - h / 2, w, h, rect_last);
-        rect_last = finalres;
-        boundingBoxRes = finalres;
+            tracking_score = static_cast<float>(maxVal);
+
+            float cx = (maxLoc.x + offset_map.at<float>(0, maxLoc.y, maxLoc.x)) / 16;
+            float cy = (maxLoc.y + offset_map.at<float>(1, maxLoc.y, maxLoc.x)) / 16;
+            float w = size_map.at<float>(0, maxLoc.y, maxLoc.x);
+            float h = size_map.at<float>(1, maxLoc.y, maxLoc.x);
+
+            Rect candidate_rect = returnfromcrop(cx - w / 2, cy - h / 2, w, h, rect_last);
+            // std::cout << candidate_rect << "score: " << tracking_score << std::endl;
+            maxRects.push_back(candidate_rect);
+            maxScores.push_back(tracking_score);
+            conf_map_copy.at<float>(maxLoc.y, maxLoc.x) = 0;
+            cv::rectangle(image, candidate_rect, cv::Scalar(255, 0, 0), 2, 1);
+        }
+        // cv::imshow("ModVIT", image);
+
+        int highestScoreIndex = 0;
+
+        // simillar confs of the best two candidates
+        if (maxScores[0] < 1.2 * maxScores[1]) {
+            // postprocessed scores
+            std::vector<double> candidatesScores;
+            // take first 3 highest scores and calculate their overlaps with other ones
+            for (int i = 0; i < 3; i++)
+            {
+                double candidateScore = 0;
+                for (int j = 0; j < 5; j++)
+                {
+                    candidateScore += calculate_overlap(maxRects[i], maxRects[j]) * maxScores[j];
+                }
+                candidateScore *= maxScores[i];
+                candidatesScores.push_back(candidateScore);
+            }
+
+            auto maxCandidateScoreIter = std::max_element(candidatesScores.begin(), candidatesScores.end());
+            highestScoreIndex = std::distance(candidatesScores.begin(), maxCandidateScoreIter);
+            if (highestScoreIndex != 0)
+                std::cout << "non zero index"; // for debugging
+
+        }
+
+        rect_last = maxRects[highestScoreIndex];
+        boundingBoxRes = maxRects[highestScoreIndex];
+        tracking_score = maxScores[highestScoreIndex];
         return true;
     }
 
