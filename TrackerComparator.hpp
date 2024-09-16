@@ -26,6 +26,7 @@ class TrackerComparator
 {
 public:
     TrackerComparator(const YAML::Node& config);
+    ~TrackerComparator();
     void loadDataset(const DatasetInfo& d_info);
     void loadVideoOnlyDataset(const std::string& path);
     bool setupComponents(const std::string & instance_results_dir = "");

@@ -16,7 +16,7 @@
             // Resolved by CMake Tools:
             "program": "${command:cmake.launchTargetPath}",
             "args": [
-                "data/custom/car_probo"
+                "data/custom/truck2"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

@@ -60,6 +60,7 @@ def main(base_dir):
     overall_results = {
         'CSRT': {'average_overlap': [], 'average_error': [], 'average_processing_time': [], 'valid_frame_percent': [], 'reinit_count': []},
         'VIT': {'average_overlap': [], 'average_error': [], 'average_processing_time': [], 'valid_frame_percent': [], 'reinit_count': []},
+        'ModVIT': {'average_overlap': [], 'average_error': [], 'average_processing_time': [], 'valid_frame_percent': [], 'reinit_count': []},
         'DaSiam': {'average_overlap': [], 'average_error': [], 'average_processing_time': [], 'valid_frame_percent': [], 'reinit_count': []},
     }
 

@@ -23,6 +23,10 @@ TrackerComparator::TrackerComparator(const YAML::Node& config) : config(config)
     else
         spdlog::warn("Unknown mode: {}", config["mode"].as<std::string>());
 }
+TrackerComparator::~TrackerComparator()
+{
+    video_writer.release();
+}
 
 void TrackerComparator::parseReinitStrategy(const std::string& strategy)
 {
