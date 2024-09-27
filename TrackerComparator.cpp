@@ -83,7 +83,7 @@ bool TrackerComparator::setupTrackersAndEvaluators()
         trackers.push_back(std::make_unique<DaSiamTracker>(config["trackers"]["dasiam"]["score_thresh"].as<double>()));
         trackers.push_back(std::make_unique<VITTracker>(config["trackers"]["vit"]["score_thresh"].as<double>()));
         trackers.push_back(std::make_unique<ModVITTracker>(config["trackers"]["modvit"]["score_thresh"].as<double>()));
-        colors = std::vector<cv::Scalar>({ cv::Scalar(255, 50, 150), cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(50, 255, 50) });
+        colors = std::vector<cv::Scalar>({ cv::Scalar(255, 50, 150), cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(200, 170, 255) });
 
         TrackerPerformanceEvaluatorArgs args;
         args.overlap_thresh = config["evaluation"]["overlap_thresh"].as<double>();
@@ -222,7 +222,7 @@ void TrackerComparator::runEvaluation()
                 }
 
                 auto color = tracking_valid ? colors[i] : cv::Scalar(0, 0, 255);
-                cv::putText(frame_vis, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
+                cv::putText(frame_vis, trackers[i]->getName(), cv::Point(bbox.x + bbox.width + 5, bbox.y + 17 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
                     2);
                 cv::rectangle(frame_vis, bbox, color, 2, 1);
                 std::string state_str = stateToString(trackers[i]->getState());
@@ -236,7 +236,7 @@ void TrackerComparator::runEvaluation()
             }
             cv::putText(frame_vis,
                 "OCCLUSION: " + std::to_string(ground_truths[frame_count].occluded),
-                cv::Point(10, (frame_vis.rows - 20) - 30 * trackers.size()), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 0), 2);
+                cv::Point(10, (frame_vis.rows - 20) - 30 * trackers.size()), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2);
 
 
             video_writer.write(frame_vis);
