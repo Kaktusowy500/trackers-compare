@@ -82,7 +82,7 @@ bool TrackerComparator::setupTrackersAndEvaluators()
         trackers.push_back(std::make_unique<CSRTTracker>());
         trackers.push_back(std::make_unique<DaSiamTracker>(config["trackers"]["dasiam"]["score_thresh"].as<double>()));
         trackers.push_back(std::make_unique<VITTracker>(config["trackers"]["vit"]["score_thresh"].as<double>()));
-        trackers.push_back(std::make_unique<ModVITTracker>(config["trackers"]["vit"]["score_thresh"].as<double>()));
+        trackers.push_back(std::make_unique<ModVITTracker>(config["trackers"]["modvit"]["score_thresh"].as<double>()));
         colors = std::vector<cv::Scalar>({ cv::Scalar(255, 50, 150), cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(50, 255, 50) });
 
         TrackerPerformanceEvaluatorArgs args;

@@ -4,6 +4,8 @@ trackers:
     score_thresh: 0.8
   vit:
     score_thresh: 0.3
+  modvit:
+    score_thresh: 0.3
 
 evaluation:
   overlap_thresh: 0.3
@@ -15,4 +17,5 @@ reinit_strategy: "immediate"
 
 # debug, eval - eval reduces for eg. waiting time between frames
 mode: "eval"
-save_video: False
+# mode: "debug"
+save_video: True
