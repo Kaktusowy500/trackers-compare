@@ -222,14 +222,19 @@ void TrackerComparator::runEvaluation()
                 }
 
                 auto color = tracking_valid ? colors[i] : cv::Scalar(0, 0, 255);
-                cv::putText(frame_vis, trackers[i]->getName(), cv::Point(bbox.x + bbox.width + 5, bbox.y + 17 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
-                    2);
-                cv::rectangle(frame_vis, bbox, color, 2, 1);
+                if (bbox.area() > 0)
+                {
+                    cv::putText(frame_vis, trackers[i]->getName(), cv::Point(bbox.x + bbox.width + 5, bbox.y + 17 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
+                        2);
+                    cv::rectangle(frame_vis, bbox, color, 2, 1);
+                }
+
                 std::string state_str = stateToString(trackers[i]->getState());
                 cv::Scalar state_color = tracking_valid ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
                 std::string tracker_info_str = trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore());
                 if (tracking_reinited)
                     tracker_info_str += " REINITED";
+                    
                 cv::putText(frame_vis,
                     tracker_info_str,
                     cv::Point(10, (frame_vis.rows - 20) - 30 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
