@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(tracker_compare)
-set(OpenCV_DIR ~/git/build) # use opencv 4.9 built from source
+set(OpenCV_DIR ~/git/opencv_build) # use opencv 4.9 built from source
 find_package(OpenCV REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
