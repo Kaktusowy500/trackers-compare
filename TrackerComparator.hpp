@@ -41,7 +41,7 @@ private:
     void setupVideoWriter(const std::string& instance_results_dir);
     void convertGTToNonNormalized(int imgWidth, int imgHeight);
     void parseReinitStrategy(const std::string& strategy);
-    void applyReinitStrategy(const cv::Mat& frame, int index, ValidationStatus valid_status);
+    bool applyReinitStrategy(const cv::Mat& frame, int index, ValidationStatus valid_status);
     unsigned calcWaitTime();
 
     DatasetInfo dataset_info;

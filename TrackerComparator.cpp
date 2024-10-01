@@ -82,8 +82,8 @@ bool TrackerComparator::setupTrackersAndEvaluators()
         trackers.push_back(std::make_unique<CSRTTracker>());
         trackers.push_back(std::make_unique<DaSiamTracker>(config["trackers"]["dasiam"]["score_thresh"].as<double>()));
         trackers.push_back(std::make_unique<VITTracker>(config["trackers"]["vit"]["score_thresh"].as<double>()));
-        trackers.push_back(std::make_unique<ModVITTracker>(config["trackers"]["vit"]["score_thresh"].as<double>()));
-        colors = std::vector<cv::Scalar>({ cv::Scalar(255, 50, 150), cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(50, 255, 50) });
+        trackers.push_back(std::make_unique<ModVITTracker>(config["trackers"]["modvit"]["score_thresh"].as<double>()));
+        colors = std::vector<cv::Scalar>({ cv::Scalar(255, 50, 150), cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(200, 170, 255) });
 
         TrackerPerformanceEvaluatorArgs args;
         args.overlap_thresh = config["evaluation"]["overlap_thresh"].as<double>();
@@ -164,7 +164,7 @@ bool TrackerComparator::readFirstFrameAndInit()
     return true;
 }
 
-void TrackerComparator::applyReinitStrategy(const cv::Mat& frame, int index, ValidationStatus reason)
+bool TrackerComparator::applyReinitStrategy(const cv::Mat& frame, int index, ValidationStatus reason)
 {
 
     if (reinit_strategy == ReinitStrategy::Immediate)
@@ -174,14 +174,14 @@ void TrackerComparator::applyReinitStrategy(const cv::Mat& frame, int index, Val
             spdlog::debug("Try to apply reninit strategy to tracker {}, reason {}", trackers[index]->getName(), ValidationStatusToString(reason));
             trackers[index]->init(frame, ground_truths[frame_count].rect);
             evaluators[index]->trackingReinited();
+            return true;
         }
     }
     else if (reinit_strategy == ReinitStrategy::OneInit)
     {
         trackers[index]->setState(TrackerState::Lost);
     }
-
-    // TODO implement delayed reinit strategy
+    return false;
 }
 
 void TrackerComparator::runEvaluation()
@@ -214,25 +214,36 @@ void TrackerComparator::runEvaluation()
                 ValidationStatus valid_status = evaluators[i]->validateAndAddResult(ground_truths[frame_count].rect, bbox, processing_time.count(), trackers[i]->getState() == TrackerState::Lost);
 
                 bool tracking_valid = (trackers[i]->getState() == TrackerState::Tracking);
+                bool tracking_reinited = false;
                 if (valid_status != ValidationStatus::Valid && trackers[i]->getState() != TrackerState::Lost)
                 {
                     tracking_valid = false;
-                    applyReinitStrategy(frame, i, valid_status);
+                    tracking_reinited = applyReinitStrategy(frame, i, valid_status);
                 }
-                // if (tracking_valid)
-                // {
 
                 auto color = tracking_valid ? colors[i] : cv::Scalar(0, 0, 255);
-                cv::putText(frame_vis, trackers[i]->getName(), cv::Point(bbox.x, bbox.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
-                    2);
-                cv::rectangle(frame_vis, bbox, color, 2, 1);
-                // }
+                if (bbox.area() > 0)
+                {
+                    cv::putText(frame_vis, trackers[i]->getName(), cv::Point(bbox.x + bbox.width + 5, bbox.y + 17 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, color,
+                        2);
+                    cv::rectangle(frame_vis, bbox, color, 2, 1);
+                }
+
                 std::string state_str = stateToString(trackers[i]->getState());
                 cv::Scalar state_color = tracking_valid ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
+                std::string tracker_info_str = trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore());
+                if (tracking_reinited)
+                    tracker_info_str += " REINITED";
+                    
                 cv::putText(frame_vis,
-                    trackers[i]->getName() + " : " + state_str + " " + std::to_string(trackers[i]->getTrackingScore()),
+                    tracker_info_str,
                     cv::Point(10, (frame_vis.rows - 20) - 30 * i), cv::FONT_HERSHEY_SIMPLEX, 0.5, state_color, 2);
             }
+            cv::putText(frame_vis,
+                "OCCLUSION: " + std::to_string(ground_truths[frame_count].occluded),
+                cv::Point(10, (frame_vis.rows - 20) - 30 * trackers.size()), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2);
+
+
             video_writer.write(frame_vis);
             cv::imshow("Frame", frame_vis);
             unsigned to_wait = calcWaitTime();

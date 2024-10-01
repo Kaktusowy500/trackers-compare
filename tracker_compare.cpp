@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 {
   spdlog::cfg::load_env_levels();
   spdlog::info("Tracker Compare started");
-  YAML::Node config = YAML::LoadFile("config/general.yaml");
+  YAML::Node config = YAML::LoadFile("config/config.yaml");
 
   bool preview_only = false;
   if (argc < 2)
