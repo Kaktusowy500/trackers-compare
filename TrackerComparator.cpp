@@ -247,7 +247,7 @@ void TrackerComparator::runEvaluation()
             video_writer.write(frame_vis);
             cv::imshow("Frame", frame_vis);
             unsigned to_wait = calcWaitTime();
-            if (cv::waitKey(to_wait) >= 0)
+            if (cv::waitKey(to_wait) == 'q')
                 break; // Press any key to exit
             frame_count++;
         }
