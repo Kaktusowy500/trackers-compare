@@ -2,6 +2,7 @@
 #include <fstream>
 #include <numeric>
 #include <iostream>
+#include <cmath>
 
 std::string ValidationStatusToString(ValidationStatus status)
 {
@@ -127,6 +128,63 @@ double TrackerPerformanceEvaluator::getValidFramePercent() const
   return valid_count / static_cast<double>(results.size());
 }
 
+// Method to calculate the standard deviation of overlaps
+double TrackerPerformanceEvaluator::getOverlapStd() const
+{
+  double mean = getAverageOverlap();
+  double sum_sq_diff = 0.0;
+  int valid_count = 0;
+
+  for (const auto& result : results)
+  {
+    if (result.valid)
+    {
+      sum_sq_diff += std::pow(result.overlap - mean, 2);
+      valid_count++;
+    }
+  }
+
+  return valid_count > 1 ? std::sqrt(sum_sq_diff / (valid_count - 1)) : 0.0;
+}
+
+// Method to calculate the standard deviation of center errors
+double TrackerPerformanceEvaluator::getErrorStd() const
+{
+  double mean = getAverageError();
+  double sum_sq_diff = 0.0;
+  int valid_count = 0;
+
+  for (const auto& result : results)
+  {
+    if (result.valid)
+    {
+      sum_sq_diff += std::pow(result.error - mean, 2);
+      valid_count++;
+    }
+  }
+
+  return valid_count > 1 ? std::sqrt(sum_sq_diff / (valid_count - 1)) : 0.0;
+}
+
+// Method to calculate the standard deviation of processing times
+double TrackerPerformanceEvaluator::getProcessingTimeStd() const
+{
+  double mean = getAverageProcessingTime();
+  double sum_sq_diff = 0.0;
+  int valid_count = 0;
+
+  for (const auto& result : results)
+  {
+    if (result.valid)
+    {
+      sum_sq_diff += std::pow(result.processing_time - mean, 2);
+      valid_count++;
+    }
+  }
+
+  return valid_count > 1 ? std::sqrt(sum_sq_diff / (valid_count - 1)) : 0.0;
+}
+
 // Method to save the results to a file
 void TrackerPerformanceEvaluator::saveResultsToFile(const std::string& filename) const
 {
@@ -149,25 +207,33 @@ void TrackerPerformanceEvaluator::saveResultsToFile(const std::string& filename)
 SequenceTrackingSummary TrackerPerformanceEvaluator::getTrackingSummary()
 {
   SequenceTrackingSummary summary;
-  summary.average_overlap = getAverageOverlap();
-  summary.average_error = getAverageError();
-  summary.average_processing_time = getAverageProcessingTime();
-  summary.valid_frame_percent = getValidFramePercent();
-  summary.reinit_count = reinit_count;
-
+  summary.avg_overlap = getAverageOverlap();
+  summary.avg_cle = getAverageError();
+  summary.avg_time = getAverageProcessingTime();
+  summary.success_rt = getValidFramePercent();
+  summary.reinit_cnt = reinit_cnt;
+  summary.avg_overlap_std = getOverlapStd();
+  summary.avg_cle_std = getErrorStd();
+  summary.avg_time_std = getProcessingTimeStd();
 
   spdlog::info("Tracker: {} statistics:\n"
     "Average Overlap: {}\n"
     "Average Center Error: {}\n"
     "Average Processing Time: {}\n"
     "Valid Time Tracking Percentage: {}\n"
-    "Reinit number: {}",
+    "Reinit number: {}\n"
+    "Overlap Std Dev: {}\n"
+    "Error Std Dev: {}\n"
+    "Processing Time Std Dev: {}",
     tracker_name,
-    summary.average_overlap,
-    summary.average_error,
-    summary.average_processing_time,
-    summary.valid_frame_percent,
-    summary.reinit_count);
+    summary.avg_overlap,
+    summary.avg_cle,
+    summary.avg_time,
+    summary.success_rt,
+    summary.reinit_cnt,
+    summary.avg_overlap_std,
+    summary.avg_cle_std,
+    summary.avg_time_std);
 
   return summary;
 }

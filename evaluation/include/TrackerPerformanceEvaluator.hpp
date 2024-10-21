@@ -36,19 +36,16 @@ class TrackerPerformanceEvaluator
 {
 public:
     TrackerPerformanceEvaluator(const TrackerPerformanceEvaluatorArgs& args);
-    // Method to add a single frame's results
     ValidationStatus validateAndAddResult(const cv::Rect& ground_truth, const cv::Rect& tracking_result, double processing_time, bool prior_valid);
 
-    // Method to calculate and return the average overlap
     double getAverageOverlap() const;
-
-    // Method to calculate and return the average center error
     double getAverageError() const;
-
     double getAverageProcessingTime() const;
     double getValidFramePercent() const;
+    double getOverlapStd() const;
+    double getErrorStd() const;
+    double getProcessingTimeStd() const;
 
-    // Method to save the results to a file
     void saveResultsToFile(const std::string& filename) const;
 
     SequenceTrackingSummary getTrackingSummary();
@@ -56,11 +53,11 @@ public:
     void trackingReinited()
     {
         spdlog::info("Tracker: {} reinited", tracker_name);
-        reinit_count++;
+        reinit_cnt++;
     }
     unsigned int getReinitCount()
     {
-        return reinit_count;
+        return reinit_cnt;
     }
 
 private:
@@ -73,5 +70,5 @@ private:
     double overlap_thresh = 0.3;
     double center_error_thresh = 0.3; // normalized diagonal of the bounding box
     
-    unsigned int reinit_count = 0;
+    unsigned int reinit_cnt = 0;
 };

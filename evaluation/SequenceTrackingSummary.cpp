@@ -3,11 +3,14 @@
 YAML::Emitter& operator<<(YAML::Emitter& out, const SequenceTrackingSummary& summary)
 {
     out << YAML::BeginMap;
-    out << YAML::Key << "average_overlap" << YAML::Value << summary.average_overlap;
-    out << YAML::Key << "average_error" << YAML::Value << summary.average_error;
-    out << YAML::Key << "average_processing_time" << YAML::Value << summary.average_processing_time;
-    out << YAML::Key << "valid_frame_percent" << YAML::Value << summary.valid_frame_percent;
-    out << YAML::Key << "reinit_count" << YAML::Value << summary.reinit_count;
+    out << YAML::Key << "avg_overlap" << YAML::Value << summary.avg_overlap;
+    out << YAML::Key << "avg_overlap_std" << YAML::Value << summary.avg_overlap_std;
+    out << YAML::Key << "avg_cle" << YAML::Value << summary.avg_cle;
+    out << YAML::Key << "avg_cle_std" << YAML::Value << summary.avg_cle_std;
+    out << YAML::Key << "avg_time" << YAML::Value << summary.avg_time;
+    out << YAML::Key << "avg_time_std" << YAML::Value << summary.avg_time_std;
+    out << YAML::Key << "success_rt" << YAML::Value << summary.success_rt;
+    out << YAML::Key << "reinit_cnt" << YAML::Value << summary.reinit_cnt;
     out << YAML::EndMap;
     return out;
 }
