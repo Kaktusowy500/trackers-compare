@@ -43,8 +43,8 @@ namespace cv {
         bool update(InputArray image, Rect& boundingBox) CV_OVERRIDE;
         float getTrackingScore() CV_OVERRIDE;
 
-        Rect rect_last;
-        float tracking_score;
+        Rect rectLast;
+        float trackingScore;
 
         TrackerModVIT::Params params;
 
@@ -63,12 +63,12 @@ namespace cv {
     static void crop_image(const Mat& src, Mat& dst, Rect box, int factor)
     {
         int x = box.x, y = box.y, w = box.width, h = box.height;
-        int crop_sz = cvCeil(sqrt(w * h) * factor);
+        int cropSz = cvCeil(sqrt(w * h) * factor);
 
-        int x1 = x + (w - crop_sz) / 2;
-        int x2 = x1 + crop_sz;
-        int y1 = y + (h - crop_sz) / 2;
-        int y2 = y1 + crop_sz;
+        int x1 = x + (w - cropSz) / 2;
+        int x2 = x1 + cropSz;
+        int y1 = y + (h - cropSz) / 2;
+        int y2 = y1 + cropSz;
 
         int x1_pad = std::max(0, -x1);
         int y1_pad = std::max(0, -y1);
@@ -97,9 +97,9 @@ namespace cv {
 
     double calculate_overlap(const cv::Rect& bb1, const cv::Rect& bb2)
     {
-        int intersection_area = (bb1 & bb2).area();
-        int union_area = bb1.area() + bb2.area() - intersection_area;
-        return static_cast<double>(intersection_area) / union_area;
+        int intersectionArea = (bb1 & bb2).area();
+        int unionArea = bb1.area() + bb2.area() - intersectionArea;
+        return static_cast<double>(intersectionArea) / unionArea;
     }
 
 
@@ -137,17 +137,17 @@ namespace cv {
         return hanningWindow;
     }
 
-    static Rect returnfromcrop(float x, float y, float w, float h, Rect res_Last)
+    static Rect returnfromcrop(float x, float y, float w, float h, Rect resLast)
     {
-        int cropwindowwh = 4 * cvFloor(sqrt(res_Last.width * res_Last.height));
-        int x0 = res_Last.x + (res_Last.width - cropwindowwh) / 2;
-        int y0 = res_Last.y + (res_Last.height - cropwindowwh) / 2;
-        Rect finalres;
-        finalres.x = cvFloor(x * cropwindowwh + x0);
-        finalres.y = cvFloor(y * cropwindowwh + y0);
-        finalres.width = cvFloor(w * cropwindowwh);
-        finalres.height = cvFloor(h * cropwindowwh);
-        return finalres;
+        int cropWindowWH = 4 * cvFloor(sqrt(resLast.width * resLast.height));
+        int x0 = resLast.x + (resLast.width - cropWindowWH) / 2;
+        int y0 = resLast.y + (resLast.height - cropWindowWH) / 2;
+        Rect finalRes;
+        finalRes.x = cvFloor(x * cropWindowWH + x0);
+        finalRes.y = cvFloor(y * cropWindowWH + y0);
+        finalRes.width = cvFloor(w * cropWindowWH);
+        finalRes.height = cvFloor(h * cropWindowWH);
+        return finalRes;
     }
 
     void TrackerModVITImpl::init(InputArray image_, const Rect& boundingBox_)
@@ -160,14 +160,14 @@ namespace cv {
         net.setInput(blob, "template");
         Size size(16, 16);
         hanningWindow = hann2d(size, false);
-        rect_last = boundingBox_;
+        rectLast = boundingBox_;
     }
 
     bool TrackerModVITImpl::update(InputArray image_, Rect& boundingBoxRes)
     {
         image = image_.getMat().clone();
         Mat crop;
-        crop_image(image, crop, rect_last, 4);
+        crop_image(image, crop, rectLast, 4);
         Mat blob;
         preprocess(crop, blob, searchSize);
         net.setInput(blob, "search");
@@ -176,38 +176,37 @@ namespace cv {
         net.forward(outs, outputName);
         CV_Assert(outs.size() == 3);
 
-        Mat conf_map = outs[0].reshape(0, { 16, 16 });
-        Mat size_map = outs[1].reshape(0, { 2, 16, 16 });
-        Mat offset_map = outs[2].reshape(0, { 2, 16, 16 });
+        // unpack the network output
+        Mat confMap = outs[0].reshape(0, { 16, 16 });
+        Mat sizeMap = outs[1].reshape(0, { 2, 16, 16 });
+        Mat offsetMap = outs[2].reshape(0, { 2, 16, 16 });
 
-        multiply(conf_map, (1.0 - hanningWindow), conf_map);
+        multiply(confMap, (1.0 - hanningWindow), confMap);
 
         std::vector<Rect> maxRects;
         std::vector<double> maxScores;
-        Mat conf_map_copy = conf_map.clone();
+        Mat confMapCopy = confMap.clone();
 
         //Take 5 highest scores
         for (int i = 0; i < 5; i++)
         {
             double maxVal;
             Point maxLoc;
-            minMaxLoc(conf_map_copy, nullptr, &maxVal, nullptr, &maxLoc);
+            minMaxLoc(confMapCopy, nullptr, &maxVal, nullptr, &maxLoc);
 
-            tracking_score = static_cast<float>(maxVal);
+            trackingScore = static_cast<float>(maxVal);
 
-            float cx = (maxLoc.x + offset_map.at<float>(0, maxLoc.y, maxLoc.x)) / 16;
-            float cy = (maxLoc.y + offset_map.at<float>(1, maxLoc.y, maxLoc.x)) / 16;
-            float w = size_map.at<float>(0, maxLoc.y, maxLoc.x);
-            float h = size_map.at<float>(1, maxLoc.y, maxLoc.x);
+            float cx = (maxLoc.x + offsetMap.at<float>(0, maxLoc.y, maxLoc.x)) / 16;
+            float cy = (maxLoc.y + offsetMap.at<float>(1, maxLoc.y, maxLoc.x)) / 16;
+            float w = sizeMap.at<float>(0, maxLoc.y, maxLoc.x);
+            float h = sizeMap.at<float>(1, maxLoc.y, maxLoc.x);
 
-            Rect candidate_rect = returnfromcrop(cx - w / 2, cy - h / 2, w, h, rect_last);
-            // std::cout << candidate_rect << "score: " << tracking_score << std::endl;
-            maxRects.push_back(candidate_rect);
-            maxScores.push_back(tracking_score);
-            conf_map_copy.at<float>(maxLoc.y, maxLoc.x) = 0;
-            cv::rectangle(image, candidate_rect, cv::Scalar(255, 0, 0), 2, 1);
+            Rect candidateRect = returnfromcrop(cx - w / 2, cy - h / 2, w, h, rectLast);
+            maxRects.push_back(candidateRect);
+            maxScores.push_back(trackingScore);
+            confMapCopy.at<float>(maxLoc.y, maxLoc.x) = 0;
+            cv::rectangle(image, candidateRect, cv::Scalar(255, 0, 0), 2, 1);
         }
-        // cv::imshow("ModVIT", image);
 
         int highestScoreIndex = 0;
 
@@ -229,20 +228,18 @@ namespace cv {
 
             auto maxCandidateScoreIter = std::max_element(candidatesScores.begin(), candidatesScores.end());
             highestScoreIndex = std::distance(candidatesScores.begin(), maxCandidateScoreIter);
-            if (highestScoreIndex != 0)
-                std::cout << "non zero index"; // for debugging
 
         }
 
-        rect_last = maxRects[highestScoreIndex];
+        rectLast = maxRects[highestScoreIndex];
         boundingBoxRes = maxRects[highestScoreIndex];
-        tracking_score = maxScores[highestScoreIndex];
+        trackingScore = maxScores[highestScoreIndex];
         return true;
     }
 
     float TrackerModVITImpl::getTrackingScore()
     {
-        return tracking_score;
+        return trackingScore;
     }
 
     Ptr<TrackerModVIT> TrackerModVIT::create(const TrackerModVIT::Params& parameters)
