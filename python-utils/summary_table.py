@@ -4,6 +4,7 @@ import pandas as pd
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 
 def process_summary_file(summary_file):
@@ -33,6 +34,7 @@ def calculate_overall_averages_and_std(results):
                 final_res[tracker][key + "_std"] = round(np.std(values), digits)
     return final_res
 
+
 def save_table_as_image(df, output_file_img, exclude_columns, overall=False):
     # Adjust the column names for std columns
     if exclude_columns:
@@ -56,7 +58,7 @@ def save_table_as_image(df, output_file_img, exclude_columns, overall=False):
     for j in std_cols:
         for i in range(len(df.index) + 1):
             cell = table[(i, j)]
-            cell.set_width(0.08) 
+            cell.set_width(0.08)
 
     # Apply cell colors for max/min values
     for i, row in enumerate(df.itertuples()):
@@ -69,9 +71,39 @@ def save_table_as_image(df, output_file_img, exclude_columns, overall=False):
                 if val == df[df.columns[j]].min():
                     cell.set_facecolor('#a1d99b')
 
-    plt.savefig(output_file_img, bbox_inches='tight', pad_inches=0.1, dpi = 150)
+    plt.savefig(output_file_img, bbox_inches='tight', pad_inches=0.1, dpi=150)
     plt.close(fig)
     print(f'Results table saved as an image to {output_file_img}')
+
+
+def plot_bar_chart(df, metric, output_file_img):
+    metrics_full_names = {
+        'avg_overlap': 'Average Overlap',
+        'avg_cle': 'Average CLE',
+        'avg_time': 'Average Processing Time',
+        'SR': 'Average Success Rate',
+        'RC': 'Average Reinit Count'
+    }
+
+    unit = {
+        'avg_overlap': '',
+        'avg_cle': '[px]',
+        'avg_time': '[s]',
+        'SR': '',
+        'RC': ''
+    }
+
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=df.index, y=metric, data=df, ci=None)
+    plt.title(f'{metrics_full_names[metric]} results for each tracker')
+    plt.ylabel(metrics_full_names[metric] + f' {unit[metric]}')
+    plt.xlabel('Trackers')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(output_file_img, bbox_inches='tight', pad_inches=0.1, dpi=150)
+    plt.close()
+    print(f'Bar plot saved as an image to {output_file_img}')
+
 
 def main(base_dir):
     config_file = os.path.join(base_dir, 'config.yaml')
@@ -119,6 +151,14 @@ def main(base_dir):
     print(f"Overall Results:\n{overall_df}\n")
     overall_output_file_img = os.path.join(plots_dir, 'overall_average_tracker_results.png')
     save_table_as_image(overall_df, overall_output_file_img, exclude_columns, True)
+
+    bar_plots_dir = os.path.join(plots_dir, 'bar_plots')
+    os.makedirs(bar_plots_dir, exist_ok=True)
+
+    # Generate bar plots for each metric
+    for metric in ['avg_overlap', 'avg_cle', 'avg_time', 'SR', 'RC']:
+        bar_plot_output_file_img = os.path.join(bar_plots_dir, f'bars_{metric}.png')
+        plot_bar_chart(overall_df, metric, bar_plot_output_file_img)
 
 
 if __name__ == "__main__":
