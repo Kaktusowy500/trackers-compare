@@ -35,16 +35,15 @@ def calculate_overall_averages_and_std(results):
 
 def save_table_as_image(df, output_file_img, exclude_columns, overall=False):
     # Adjust the column names for std columns
-    df.columns = [col if "std" not in col else "std" for col in df.columns]
+    if exclude_columns:
+        df = df.drop(columns=exclude_columns, errors='ignore')
     if overall:
-        df = df.rename(columns={'success_rt': 'avg_success_rt', 'reinit_cnt': 'avg_reinit_cnt'})
+        df = df.rename(columns={'SR': 'avg_SR', 'RC': 'avg_RC'})
 
-    fig, ax = plt.subplots(figsize=(12, 2))  # Adjusted the size for better readability
+    df.columns = [col if "std" not in col else "std" for col in df.columns]
+    fig, ax = plt.subplots(figsize=(10, 2))  # Adjusted the size for better readability
     ax.axis('tight')
     ax.axis('off')
-
-    if exclude_columns:
-        df = df.drop(columns=exclude_columns)
 
     # Create the table
     table = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=df.index, cellLoc='center', loc='center')
@@ -57,20 +56,20 @@ def save_table_as_image(df, output_file_img, exclude_columns, overall=False):
     for j in std_cols:
         for i in range(len(df.index) + 1):
             cell = table[(i, j)]
-            cell.set_width(0.07) 
+            cell.set_width(0.08) 
 
     # Apply cell colors for max/min values
     for i, row in enumerate(df.itertuples()):
         for j, val in enumerate(row[1:]):
             cell = table[(i + 1, j)]
-            if df.columns[j] in ['avg_overlap', 'success_rt', 'avg_success_rt']:
+            if df.columns[j] in ['avg_overlap', 'SR', 'avg_SR']:
                 if val == df[df.columns[j]].max():
                     cell.set_facecolor('#a1d99b')
-            if df.columns[j] in ['avg_cle', 'avg_time', "reinit_cnt", "avg_reinit_cnt"]:
+            if df.columns[j] in ['avg_cle', 'avg_time', "RC", "avg_RC"]:
                 if val == df[df.columns[j]].min():
                     cell.set_facecolor('#a1d99b')
 
-    plt.savefig(output_file_img, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig(output_file_img, bbox_inches='tight', pad_inches=0.1, dpi = 150)
     plt.close(fig)
     print(f'Results table saved as an image to {output_file_img}')
 
@@ -83,13 +82,13 @@ def main(base_dir):
         config = yaml.safe_load(f)
 
     reinit_strategy = config.get('reinit_strategy', '')
-    exclude_columns = ['reinit_cnt'] if reinit_strategy == 'one_init' else []
+    exclude_columns = ['RC', 'RC_std'] if reinit_strategy == 'one_init' else []
 
     overall_results = {
-        'CSRT': {'avg_overlap': [], 'avg_overlap_std': [], 'avg_cle': [], 'avg_cle_std': [], 'avg_time': [], 'avg_time_std': [], 'success_rt': [], 'reinit_cnt': []},
-        'VIT': {'avg_overlap': [], 'avg_overlap_std': [], 'avg_cle': [], 'avg_cle_std': [], 'avg_time': [], 'avg_time_std': [], 'success_rt': [], 'reinit_cnt': []},
-        'ModVIT': {'avg_overlap': [], 'avg_overlap_std': [], 'avg_cle': [], 'avg_cle_std': [], 'avg_time': [], 'avg_time_std': [], 'success_rt': [], 'reinit_cnt': []},
-        'DaSiam': {'avg_overlap': [], 'avg_overlap_std': [], 'avg_cle': [], 'avg_cle_std': [], 'avg_time': [], 'avg_time_std': [], 'success_rt': [], 'reinit_cnt': []},
+        'CSRT': {'avg_overlap': [], 'avg_overlap_std': [], 'avg_cle': [], 'avg_cle_std': [], 'avg_time': [], 'avg_time_std': [], 'SR': [], 'RC': []},
+        'VIT': {'avg_overlap': [], 'avg_overlap_std': [], 'avg_cle': [], 'avg_cle_std': [], 'avg_time': [], 'avg_time_std': [], 'SR': [], 'RC': []},
+        'ModVIT': {'avg_overlap': [], 'avg_overlap_std': [], 'avg_cle': [], 'avg_cle_std': [], 'avg_time': [], 'avg_time_std': [], 'SR': [], 'RC': []},
+        'DaSiam': {'avg_overlap': [], 'avg_overlap_std': [], 'avg_cle': [], 'avg_cle_std': [], 'avg_time': [], 'avg_time_std': [], 'SR': [], 'RC': []},
     }
 
     # Create plots directory if it does not exist
